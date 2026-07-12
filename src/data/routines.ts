@@ -16,14 +16,119 @@ export interface Exercise {
     dynamic?: boolean;
 }
 
-export const techniques: Record<string, {name: string, desc: string}> = {
-    "Monday": { name: "Slides", desc: "Practice sliding into and out of notes to connect positions smoothly without picking the destination note." },
-    "Tuesday": { name: "Hammer-ons", desc: "Focus on clean, rhythmic hammer-ons. Make sure the hammered note is just as loud as the picked note." },
-    "Wednesday": { name: "Pull-offs", desc: "Ensure your pull-offs have a slight downward 'flick' to pluck the string and maintain volume." },
-    "Thursday": { name: "Bends", desc: "Practice reaching a specific target pitch. First play the target note normally, then bend a lower note to match that exact pitch." },
-    "Friday": { name: "Vibrato", desc: "Focus on even, rhythmic vibrato (wrist rotation, not finger wiggling). Try matching it to a slow tempo." },
-    "Saturday": { name: "Double Stops", desc: "Play two strings simultaneously within the scale shape to create thicker, chord-like textures." },
-    "Sunday": { name: "Review or free play", desc: "Combine techniques naturally. Identify which technique felt weakest this week and give it extra attention." }
+export interface Technique {
+    name: string;
+    desc: string;
+    howTo: string[];
+    whatToWatchFor: string[];
+}
+
+export const techniques: Record<string, Technique> = {
+    "Monday": { 
+        name: "Slides", 
+        desc: "Practice sliding into and out of notes to connect positions smoothly without picking the destination note.",
+        howTo: [
+            "Pluck the starting note firmly.",
+            "Maintain consistent downward pressure on the string.",
+            "Slide your finger continuously to the target fret without lifting.",
+            "Stop precisely on the target fret so it rings clearly without re-picking."
+        ],
+        whatToWatchFor: [
+            "Losing string pressure mid-slide (causes the note to die out).",
+            "Overshooting or undershooting the target fret (intonation).",
+            "Sliding too fast or too slow for the rhythm."
+        ]
+    },
+    "Tuesday": { 
+        name: "Hammer-ons", 
+        desc: "Focus on clean, rhythmic hammer-ons. Make sure the hammered note is just as loud as the picked note.",
+        howTo: [
+            "Pluck the lower note while keeping your index/lower finger anchored.",
+            "Swing your hammering finger down like a tiny hammer.",
+            "Strike the string firmly just behind the target fret wire.",
+            "Leave the finger pressed down so the new note sustains."
+        ],
+        whatToWatchFor: [
+            "Hammering too softly (causes a drop in volume).",
+            "Hammering out of time (rushing the hammer-on).",
+            "Accidentally bending the string when you strike it."
+        ]
+    },
+    "Wednesday": { 
+        name: "Pull-offs", 
+        desc: "Ensure your pull-offs have a slight downward 'flick' to pluck the string and maintain volume.",
+        howTo: [
+            "Fret both the higher note and the lower target note simultaneously.",
+            "Pluck the higher note normally.",
+            "Pull your higher finger slightly down toward the floor, 'flicking' the string as you release it.",
+            "Let the lower anchored finger take over to ring out the new note."
+        ],
+        whatToWatchFor: [
+            "Lifting the finger straight off (the note will die instantly).",
+            "Flicking too hard and accidentally bending the string out of pitch.",
+            "Forgetting to pre-fret the lower target note."
+        ]
+    },
+    "Thursday": { 
+        name: "Bends", 
+        desc: "Practice reaching a specific target pitch. First play the target note normally, then bend a lower note to match that exact pitch.",
+        howTo: [
+            "Fret the note you want to bend (usually with ring or middle finger).",
+            "Place the fingers behind it on the same string for extra pushing strength.",
+            "Pivot from your wrist (like turning a doorknob), rather than just pushing with your fingers.",
+            "Push the string up across the fretboard until you reach the target pitch."
+        ],
+        whatToWatchFor: [
+            "Bending flat or sharp (not reaching the exact target pitch).",
+            "Bending using only finger strength instead of wrist rotation.",
+            "Letting other strings ring out (use your index finger to mute higher strings)."
+        ]
+    },
+    "Friday": { 
+        name: "Vibrato", 
+        desc: "Focus on even, rhythmic vibrato (wrist rotation, not finger wiggling). Try matching it to a slow tempo.",
+        howTo: [
+            "Fret the note and anchor the side of your index finger against the neck.",
+            "Use your wrist in a slight rotational motion to bend the string slightly sharp and back down.",
+            "Keep the rhythm of the oscillation steady and even (e.g., oscillating to eighth notes or triplets).",
+            "Return fully to the original pitch on the down-swing."
+        ],
+        whatToWatchFor: [
+            "Nervous, fast 'mosquito' vibrato using only the fingers.",
+            "Bending out of tune but not returning to the core pitch.",
+            "Inconsistent speeds of oscillation."
+        ]
+    },
+    "Saturday": { 
+        name: "Double Stops", 
+        desc: "Play two strings simultaneously within the scale shape to create thicker, chord-like textures.",
+        howTo: [
+            "Identify two adjacent strings within the current scale shape.",
+            "Fret both notes simultaneously (using two fingers, or a partial barre).",
+            "Strike both strings together with a single, controlled pick stroke.",
+            "Ensure both notes ring out at equal volume."
+        ],
+        whatToWatchFor: [
+            "One string buzzing or sounding muted.",
+            "Accidentally hitting a third unwanted string.",
+            "Bending one string out of tune while fretting the other."
+        ]
+    },
+    "Sunday": { 
+        name: "Review or free play", 
+        desc: "Combine techniques naturally. Identify which technique felt weakest this week and give it extra attention.",
+        howTo: [
+            "Play through the scale shape normally.",
+            "Try adding a slide between position shifts.",
+            "Add vibrato to the final note of your phrases.",
+            "Incorporate a hammer-on or pull-off into a fast run."
+        ],
+        whatToWatchFor: [
+            "Overusing one technique while ignoring others.",
+            "Losing time and rhythm while trying to execute a technique.",
+            "Tensing up the picking hand."
+        ]
+    }
 };
 
 const DAY_TO_SHAPE: Record<string, number> = {

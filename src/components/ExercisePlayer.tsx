@@ -125,6 +125,41 @@ export default function ExercisePlayer({
                             Focus: {tech.name}
                         </h3>
                         <p className="text-xl text-slate-200 leading-relaxed max-w-3xl">{tech.desc}</p>
+                        
+                        {/* Technique Instructions */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 my-6">
+                            {/* How To */}
+                            <div className="bg-primary/10 p-6 rounded-2xl border border-primary/20 shadow-lg">
+                                <h4 className="font-bold text-primary mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                                    How to Execute
+                                </h4>
+                                <ol className="list-decimal list-outside ml-4 space-y-3">
+                                    {tech.howTo?.map((step, i) => (
+                                        <li key={i} className="text-slate-200 pl-2 leading-relaxed">
+                                            {step}
+                                        </li>
+                                    ))}
+                                </ol>
+                            </div>
+
+                            {/* What to Watch For */}
+                            <div className="bg-rose-500/10 p-6 rounded-2xl border border-rose-500/20 shadow-lg">
+                                <h4 className="font-bold text-rose-400 mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
+                                    What to Watch Out For
+                                </h4>
+                                <ul className="list-none space-y-3">
+                                    {tech.whatToWatchFor?.map((warning, i) => (
+                                        <li key={i} className="flex items-start gap-3 text-slate-200 leading-relaxed">
+                                            <span className="text-rose-500 font-bold mt-1">!</span>
+                                            {warning}
+                                        </li>
+                                    ))}
+                                </ul>
+                            </div>
+                        </div>
+
                         <p className="text-slate-400 italic text-lg bg-white/5 p-4 rounded-lg border border-white/10">{exercise.description}</p>
                         
                         {exercise.vexflowMeasures && (
