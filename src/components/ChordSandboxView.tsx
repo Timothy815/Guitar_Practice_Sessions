@@ -73,6 +73,11 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         isSpaceDownRef.current = true;
         const now = performance.now();
         
+        // Play audio feedback for the tap
+        if (progression.length > 0) {
+            playChordOnce(progression[0]);
+        }
+        
         if (lastTapTimeRef.current === 0) {
             lastTapTimeRef.current = now;
             return;
@@ -89,6 +94,11 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         if (!isTapping || !isSpaceDownRef.current) return;
         isSpaceDownRef.current = false;
         const now = performance.now();
+        
+        // Stop audio feedback to simulate mute
+        if (instrumentRef.current) {
+            instrumentRef.current.stop();
+        }
         
         if (lastTapTimeRef.current !== 0) {
             const soundDur = (now - lastTapTimeRef.current) / 1000.0;
@@ -257,7 +267,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         const t = audioCtxRef.current.currentTime;
         
         midiNotes.forEach((midi, i) => {
-            instrumentRef.current?.play(midi.toString(), t + (i * 0.03), { duration: 2, gain: 0.8 });
+            instrumentRef.current?.play(midi.toString(), t + (i * 0.03), { duration: 8, gain: 0.8 });
         });
     };
 
