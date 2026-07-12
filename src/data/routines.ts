@@ -18,26 +18,23 @@ export const pentatonicRoutine: Exercise[] = [
         id: "warmup",
         title: "1. Warmup and synchronization",
         duration: 300,
-        description: "Begin slowly enough that every note is deliberate. Spider walk (1-2-3-4). Continue across all six strings and return using strict alternate picking (Down-Up-Down-Up).",
+        description: "Begin slowly. To prepare for the A Minor Pentatonic scale, practice this chromatic spider walk at the 5th fret. Continue across all six strings and return using strict alternate picking (Down-Up-Down-Up).",
         focusPoints: [
-            "Fingertips close to the strings",
-            "Relaxed thumb and wrist",
-            "Clean separation between notes",
-            "No extra finger movement",
-            "Consistent pick depth"
+            "Keep fingertips very close to the strings",
+            "Maintain a relaxed thumb and wrist",
+            "Ensure clean separation between notes (no bleeding)",
+            "Strict alternate picking (D-U-D-U)"
         ],
         vexflowMeasures: [
             [
-                { positions: [{ str: 4, fret: 1 }], duration: "q" },
-                { positions: [{ str: 4, fret: 2 }], duration: "q" },
-                { positions: [{ str: 4, fret: 3 }], duration: "q" },
-                { positions: [{ str: 4, fret: 4 }], duration: "q" }
-            ],
-            [
-                { positions: [{ str: 3, fret: 1 }], duration: "q" },
-                { positions: [{ str: 3, fret: 2 }], duration: "q" },
-                { positions: [{ str: 3, fret: 3 }], duration: "q" },
-                { positions: [{ str: 3, fret: 4 }], duration: "q" }
+                { positions: [{ str: 6, fret: 5 }], duration: "8" },
+                { positions: [{ str: 6, fret: 6 }], duration: "8" },
+                { positions: [{ str: 6, fret: 7 }], duration: "8" },
+                { positions: [{ str: 6, fret: 8 }], duration: "8" },
+                { positions: [{ str: 5, fret: 5 }], duration: "8" },
+                { positions: [{ str: 5, fret: 6 }], duration: "8" },
+                { positions: [{ str: 5, fret: 7 }], duration: "8" },
+                { positions: [{ str: 5, fret: 8 }], duration: "8" }
             ]
         ]
     },
@@ -45,24 +42,32 @@ export const pentatonicRoutine: Exercise[] = [
         id: "position",
         title: "2. Position review",
         duration: 300,
-        description: "Practice each pentatonic position, but only briefly. Do not always start from the lowest note. Break the idea that the scale has one entrance and one exit.",
+        description: "Practice the full two-octave pentatonic position. Play completely through Shape 1 of A Minor Pentatonic ascending and descending to lock the visual shape into your mind.",
         focusPoints: [
-            "Ascend once, descend once",
             "Ascend and descend without stopping",
-            "Begin on a different string",
-            "Begin with an upstroke occasionally"
+            "Keep the tempo steady and perfectly even",
+            "Try starting on the highest note and descending first",
+            "Use your pinky on the 6th, 2nd, and 1st strings"
         ],
         vexflowMeasures: [
             [
+                { positions: [{ str: 6, fret: 5 }], duration: "8" },
+                { positions: [{ str: 6, fret: 8 }], duration: "8" },
+                { positions: [{ str: 5, fret: 5 }], duration: "8" },
+                { positions: [{ str: 5, fret: 7 }], duration: "8" },
+                { positions: [{ str: 4, fret: 5 }], duration: "8" },
+                { positions: [{ str: 4, fret: 7 }], duration: "8" },
                 { positions: [{ str: 3, fret: 5 }], duration: "8" },
-                { positions: [{ str: 3, fret: 7 }], duration: "8" },
-                { positions: [{ str: 2, fret: 5 }], duration: "8" },
-                { positions: [{ str: 2, fret: 8 }], duration: "8" }
+                { positions: [{ str: 3, fret: 7 }], duration: "8" }
             ],
             [
+                { positions: [{ str: 2, fret: 5 }], duration: "8" },
+                { positions: [{ str: 2, fret: 8 }], duration: "8" },
                 { positions: [{ str: 1, fret: 5 }], duration: "8" },
                 { positions: [{ str: 1, fret: 8 }], duration: "8" },
-                { positions: [{ str: 1, fret: 5 }], duration: "h" }
+                { positions: [{ str: 1, fret: 5 }], duration: "8" },
+                { positions: [{ str: 2, fret: 8 }], duration: "8" },
+                { positions: [{ str: 2, fret: 5 }], duration: "q" }
             ]
         ]
     },
@@ -70,22 +75,29 @@ export const pentatonicRoutine: Exercise[] = [
         id: "sequence",
         title: "3. Sequence exercises",
         duration: 300,
-        description: "Groups of Three (1-2-3, 2-3-4, 3-4-5). Play three notes, then begin again from the second note. On the fretboard, the sound becomes less predictable than simply moving upward.",
+        description: "Groups of Three: Play three scale notes, step back one, play three again. This forces your brain to see the scale differently than a straight ladder.",
         focusPoints: [
-            "Up two, back one (1-2-1-3, 2-3-2-4)",
-            "Skip one note (1-3, 2-4, 3-5)"
+            "Think: 1-2-3, 2-3-4, 3-4-5",
+            "Listen for the triplet feel naturally emerging",
+            "Maintain alternate picking through string changes"
         ],
         vexflowMeasures: [
             [
-                { positions: [{ str: 3, fret: 5 }], duration: "8" },
-                { positions: [{ str: 3, fret: 7 }], duration: "8" },
-                { positions: [{ str: 2, fret: 5 }], duration: "8" },
-                { positions: [{ str: 3, fret: 7 }], duration: "8" }
+                { positions: [{ str: 6, fret: 5 }], duration: "8" },
+                { positions: [{ str: 6, fret: 8 }], duration: "8" },
+                { positions: [{ str: 5, fret: 5 }], duration: "8" },
+                { positions: [{ str: 6, fret: 8 }], duration: "8" },
+                { positions: [{ str: 5, fret: 5 }], duration: "8" },
+                { positions: [{ str: 5, fret: 7 }], duration: "8" },
+                { positions: [{ str: 5, fret: 5 }], duration: "8" },
+                { positions: [{ str: 5, fret: 7 }], duration: "8" }
             ],
             [
-                { positions: [{ str: 2, fret: 5 }], duration: "8" },
-                { positions: [{ str: 2, fret: 8 }], duration: "8" },
-                { positions: [{ str: 2, fret: 5 }], duration: "q" }
+                { positions: [{ str: 4, fret: 5 }], duration: "8" },
+                { positions: [{ str: 5, fret: 7 }], duration: "8" },
+                { positions: [{ str: 4, fret: 5 }], duration: "8" },
+                { positions: [{ str: 4, fret: 7 }], duration: "8" },
+                { positions: [{ str: 4, fret: 5 }], duration: "h" }
             ]
         ]
     },
@@ -93,19 +105,24 @@ export const pentatonicRoutine: Exercise[] = [
         id: "rhythm",
         title: "4. Rhythm exercises",
         duration: 300,
-        description: "Rhythm is one of the best defenses against noodling. Choose only three or four notes and play them using a specific rhythmic rule.",
+        description: "Rhythm transforms scales into music. Play a simple 3-note lick, first as slow quarter notes, then double time as eighth notes. Notice how it changes the feel.",
         focusPoints: [
-            "Quarter notes or eighth notes",
-            "Triplets",
-            "Syncopated accents"
+            "Use a metronome if possible",
+            "Feel the space between the quarter notes",
+            "Keep the phrasing confident when switching to 8th notes"
         ],
         vexflowMeasures: [
             [
+                { positions: [{ str: 3, fret: 7 }], duration: "q" },
+                { positions: [{ str: 3, fret: 5 }], duration: "q" },
+                { positions: [{ str: 4, fret: 7 }], duration: "h" }
+            ],
+            [
+                { positions: [{ str: 3, fret: 7 }], duration: "8" },
                 { positions: [{ str: 3, fret: 5 }], duration: "8" },
-                { positions: [{ str: 2, fret: 5 }], duration: "8" },
-                { positions: [{ str: 2, fret: 8 }], duration: "8" },
-                { positions: [{ str: 3, fret: 5 }], duration: "8" },
-                { positions: [{ str: 2, fret: 5 }], duration: "h" }
+                { positions: [{ str: 4, fret: 7 }], duration: "8" },
+                { positions: [{ str: 4, fret: 7 }], duration: "8" },
+                { positions: [{ str: 4, fret: 7 }], duration: "h" }
             ]
         ]
     },
@@ -113,28 +130,45 @@ export const pentatonicRoutine: Exercise[] = [
         id: "technique",
         title: "5. Technique of the day",
         duration: 300,
-        description: "Focus on one expressive device rather than trying to practice everything at once.",
-        dynamic: true
+        description: "Focus purely on how the notes are articulated rather than what notes you play. Technique adds the human voice to the guitar.",
+        dynamic: true,
+        vexflowMeasures: [
+            [
+                { positions: [{ str: 3, fret: 7 }], duration: "q" },
+                { positions: [{ str: 3, fret: 5 }], duration: "q" },
+                { positions: [{ str: 4, fret: 7 }], duration: "h" }
+            ]
+        ]
     },
     {
         id: "improv",
         title: "6. Controlled improvisation",
         duration: 300,
-        description: "Improvisation does not have to mean unstructured noodling. Give each improvisation round a rule.",
+        description: "Improvise over a backing track or a drone. Do not noodle endlessly. Apply strict constraints to force creativity.",
         focusPoints: [
-            "Round 1: Three-note solo using rhythm, repetition, rests.",
-            "Round 2: One string only (think horizontally).",
-            "Round 3: Repeat and modify (play a phrase, repeat it with exactly one change)."
+            "Round 1: Play only 3 notes total. Create interest with rhythm and rests.",
+            "Round 2: Play only on the B string (think horizontally).",
+            "Round 3: Call and Response (play a phrase, then play an 'answer' phrase)."
+        ],
+        vexflowMeasures: [
+            [
+                { positions: [{ str: 2, fret: 8 }], duration: "8" },
+                { positions: [{ str: 2, fret: 5 }], duration: "8" },
+                { positions: [{ str: 3, fret: 7 }], duration: "q" },
+                { positions: [{ str: 3, fret: 5 }], duration: "8" },
+                { positions: [{ str: 4, fret: 7 }], duration: "8" },
+                { positions: [{ str: 4, fret: 7 }], duration: "q" }
+            ]
         ]
     }
 ];
 
 export const techniques: Record<string, {name: string, desc: string}> = {
-    "Monday": { name: "Slides", desc: "Practice sliding into and out of notes to connect positions." },
-    "Tuesday": { name: "Hammer-ons", desc: "Focus on clean, rhythmic hammer-ons without picking the second note." },
-    "Wednesday": { name: "Pull-offs", desc: "Ensure your pull-offs have enough snap to maintain volume." },
-    "Thursday": { name: "Bends", desc: "Practice reaching a specific target pitch rather than merely pushing the string upward. First play the target note, then bend to match it." },
-    "Friday": { name: "Vibrato", desc: "Focus on even, rhythmic vibrato. Try matching it to the tempo." },
-    "Saturday": { name: "Mixed phrasing", desc: "Combine slides, hammer-ons, and bends into single fluid phrases." },
-    "Sunday": { name: "Review or free play", desc: "Combine techniques naturally, or review what felt weakest this week." }
+    "Monday": { name: "Slides", desc: "Practice sliding into and out of notes to connect positions smoothly without picking the destination note." },
+    "Tuesday": { name: "Hammer-ons", desc: "Focus on clean, rhythmic hammer-ons. Make sure the hammered note is just as loud as the picked note." },
+    "Wednesday": { name: "Pull-offs", desc: "Ensure your pull-offs have a slight downward 'flick' to pluck the string and maintain volume." },
+    "Thursday": { name: "Bends", desc: "Practice reaching a specific target pitch. First play the target note normally, then bend a lower note to match that exact pitch." },
+    "Friday": { name: "Vibrato", desc: "Focus on even, rhythmic vibrato (wrist rotation, not finger wiggling). Try matching it to a slow tempo." },
+    "Saturday": { name: "Double Stops", desc: "Play two strings simultaneously within the pentatonic shape to create thicker, chord-like textures." },
+    "Sunday": { name: "Review or free play", desc: "Combine techniques naturally. Identify which technique felt weakest this week and give it extra attention." }
 };
