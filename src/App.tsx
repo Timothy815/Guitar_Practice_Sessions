@@ -64,6 +64,7 @@ export default function App() {
                         >
                             <option value="Pentatonic" className="bg-slate-800">Pentatonic</option>
                             <option value="Blues" className="bg-slate-800">Blues</option>
+                            <option value="Diatonic" className="bg-slate-800">Diatonic (7-Note)</option>
                         </select>
                     </div>
                     
