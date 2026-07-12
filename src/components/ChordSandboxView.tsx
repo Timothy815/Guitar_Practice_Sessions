@@ -66,8 +66,11 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         setDraggedIdx(null);
     };
 
-    const handleTap = () => {
-        if (!isTapping) return;
+    const isSpaceDownRef = useRef(false);
+
+    const handleDown = () => {
+        if (!isTapping || isSpaceDownRef.current) return;
+        isSpaceDownRef.current = true;
         const now = performance.now();
         
         // Play audio feedback for the tap
@@ -76,28 +79,65 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         }
         
         if (lastTapTimeRef.current === 0) {
-            // First tap, just start the timer
             lastTapTimeRef.current = now;
             return;
         }
 
-        const duration = (now - lastTapTimeRef.current) / 1000.0; // in seconds
-        tempRhythmRef.current.push(duration);
+        const restDur = (now - lastTapTimeRef.current) / 1000.0; // in seconds
+        if (restDur > 0.01) {
+            tempRhythmRef.current.push(-restDur); // negative for rest
+        }
         lastTapTimeRef.current = now;
+    };
+
+    const handleUp = () => {
+        if (!isTapping || !isSpaceDownRef.current) return;
+        isSpaceDownRef.current = false;
+        const now = performance.now();
+        
+        // Stop audio feedback to simulate mute
+        if (instrumentRef.current) {
+            instrumentRef.current.stop();
+        }
+        
+        if (lastTapTimeRef.current !== 0) {
+            const soundDur = (now - lastTapTimeRef.current) / 1000.0;
+            if (soundDur > 0.01) {
+                tempRhythmRef.current.push(soundDur); // positive for sound
+            }
+            lastTapTimeRef.current = now;
+        }
     };
 
     const startTapping = () => {
         setIsTapping(true);
         tempRhythmRef.current = [];
         lastTapTimeRef.current = 0; // 0 means waiting for first tap
+        isSpaceDownRef.current = false;
     };
 
     const finishTapping = () => {
         setIsTapping(false);
         
+        if (isSpaceDownRef.current) {
+            handleUp();
+        }
+
         if (tempRhythmRef.current.length > 0) {
-            const lastDur = tempRhythmRef.current[tempRhythmRef.current.length - 1];
-            tempRhythmRef.current.push(lastDur); // Assume last note rings as long as the previous one
+            // Find the last rest to duplicate, to round out the measure cleanly
+            let lastRest = 0;
+            for (let i = tempRhythmRef.current.length - 1; i >= 0; i--) {
+                if (tempRhythmRef.current[i] < 0) {
+                    lastRest = tempRhythmRef.current[i];
+                    break;
+                }
+            }
+            if (lastRest < 0) {
+                tempRhythmRef.current.push(lastRest);
+            } else if (tempRhythmRef.current.length > 0 && tempRhythmRef.current[tempRhythmRef.current.length - 1] > 0) {
+                // If they never rested, duplicate the last sound duration as a rest to give some loop padding
+                tempRhythmRef.current.push(-tempRhythmRef.current[tempRhythmRef.current.length - 1]);
+            }
             
             setCustomRhythm([...tempRhythmRef.current]);
             setStyle('custom');
@@ -109,18 +149,23 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         const handleKeyDown = (e: KeyboardEvent) => {
             if (isTapping && e.code === 'Space') {
                 e.preventDefault();
-                // Prevent auto-repeat from triggering multiple taps if held
-                if (!e.repeat) {
-                    handleTap();
-                }
+                handleDown();
+            }
+        };
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (isTapping && e.code === 'Space') {
+                e.preventDefault();
+                handleUp();
             }
         };
 
         if (isTapping) {
             window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
         }
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
         };
     }, [isTapping]);
 
@@ -480,11 +525,14 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 {isTapping ? (
                                     <>
                                         <button 
-                                            onMouseDown={handleTap}
-                                            onTouchStart={handleTap}
+                                            onMouseDown={handleDown}
+                                            onMouseUp={handleUp}
+                                            onMouseLeave={handleUp}
+                                            onTouchStart={handleDown}
+                                            onTouchEnd={handleUp}
                                             className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/20 transition-all active:scale-95 active:bg-indigo-600 select-none"
                                         >
-                                            TAP HERE
+                                            TAP (Hold & Release)
                                         </button>
                                         <button 
                                             onClick={finishTapping}
