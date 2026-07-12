@@ -103,5 +103,30 @@ export const CURRICULUM: CurriculumLevel[] = [
                 config: { key: 'C', quality: 'Major', family: 'Diatonic', shapeId: 2, dayOfWeek: 'Friday' }
             }
         ]
+    },
+    {
+        id: "level-4",
+        title: "Level 4: Speed Building & Exotic Scales",
+        description: "Push your limits. Focus on pure mechanical speed and explore the dark, exotic sounds of the Harmonic Minor scale.",
+        modules: [
+            {
+                id: "l4-m1",
+                title: "G Major 3-Note-Per-String Shred",
+                description: "This routine uses the Speed & Metronome focus. Start slow and push your BPM on this wide G Major shape.",
+                config: { key: 'G', quality: 'Major', family: 'Diatonic', shapeId: 1, dayOfWeek: 'Speed' }
+            },
+            {
+                id: "l4-m2",
+                title: "A Harmonic Minor (Position 1)",
+                description: "The Yngwie Malmsteen special. The raised 7th (G#) creates a massive 1.5 step leap that defines this exotic sound.",
+                config: { key: 'A', quality: 'Minor', family: 'Harmonic Minor', shapeId: 1, dayOfWeek: 'Sunday' }
+            },
+            {
+                id: "l4-m3",
+                title: "E Harmonic Minor Speed Run",
+                description: "Combine the dark sound of the Harmonic Minor with the Speed focus. Fast, clean, and aggressive.",
+                config: { key: 'E', quality: 'Minor', family: 'Harmonic Minor', shapeId: 1, dayOfWeek: 'Speed' }
+            }
+        ]
     }
 ];
