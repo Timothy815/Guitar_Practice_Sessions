@@ -1,4 +1,5 @@
-import { getShapeData } from './musicEngine';
+import { getScaleData } from './musicEngine';
+import type { ScaleFamily, ScaleQuality } from './musicEngine';
 
 export interface TabNoteData {
     positions: { str: number; fret: number | string }[];
@@ -21,7 +22,7 @@ export const techniques: Record<string, {name: string, desc: string}> = {
     "Wednesday": { name: "Pull-offs", desc: "Ensure your pull-offs have a slight downward 'flick' to pluck the string and maintain volume." },
     "Thursday": { name: "Bends", desc: "Practice reaching a specific target pitch. First play the target note normally, then bend a lower note to match that exact pitch." },
     "Friday": { name: "Vibrato", desc: "Focus on even, rhythmic vibrato (wrist rotation, not finger wiggling). Try matching it to a slow tempo." },
-    "Saturday": { name: "Double Stops", desc: "Play two strings simultaneously within the pentatonic shape to create thicker, chord-like textures." },
+    "Saturday": { name: "Double Stops", desc: "Play two strings simultaneously within the scale shape to create thicker, chord-like textures." },
     "Sunday": { name: "Review or free play", desc: "Combine techniques naturally. Identify which technique felt weakest this week and give it extra attention." }
 };
 
@@ -35,9 +36,9 @@ const DAY_TO_SHAPE: Record<string, number> = {
     "Sunday": 2
 };
 
-export function generateRoutine(key: string, dayOfWeek: string): { routine: Exercise[], shapeData: any } {
+export function generateRoutine(key: string, family: ScaleFamily, quality: ScaleQuality, dayOfWeek: string): { routine: Exercise[], shapeData: any } {
     const shapeId = DAY_TO_SHAPE[dayOfWeek] || 1;
-    const shape = getShapeData(key, shapeId);
+    const shape = getScaleData(key, family, quality, shapeId);
     
     // Helper to get actual frets easily
     const f = shape.actualFrets;
@@ -47,7 +48,7 @@ export function generateRoutine(key: string, dayOfWeek: string): { routine: Exer
             id: "warmup",
             title: "1. Warmup and synchronization",
             duration: 300,
-            description: `Begin slowly. We are preparing for ${key} Minor Pentatonic ${shape.name}. Practice this chromatic spider walk at fret ${shape.baseFret}. Continue across all six strings and return using strict alternate picking.`,
+            description: `Begin slowly. We are preparing for ${shape.name}. Practice this chromatic spider walk at fret ${shape.baseFret}. Continue across all six strings and return using strict alternate picking.`,
             focusPoints: [
                 "Keep fingertips very close to the strings",
                 "Maintain a relaxed thumb and wrist",
@@ -172,7 +173,7 @@ export function generateRoutine(key: string, dayOfWeek: string): { routine: Exer
             id: "improv",
             title: "6. Controlled improvisation",
             duration: 300,
-            description: `Improvise over a ${key} Minor backing track using ONLY ${shape.name}. Do not noodle endlessly. Apply strict constraints to force creativity.`,
+            description: `Improvise over a backing track in ${key} ${quality} using ONLY ${shape.name}. Do not noodle endlessly. Apply strict constraints to force creativity.`,
             focusPoints: [
                 "Round 1: Play only 3 notes total. Create interest with rhythm and rests.",
                 "Round 2: Play only on the B string (think horizontally).",

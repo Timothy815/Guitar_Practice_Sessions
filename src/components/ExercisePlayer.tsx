@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { techniques, type Exercise } from '../data/routines';
 import VexFlowTab from './VexFlowTab';
 import Fretboard from './Fretboard';
+import ChordDiagram from './ChordDiagram';
 import { Play, Pause, ChevronRight, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
 interface ExercisePlayerProps {
@@ -86,26 +87,34 @@ export default function ExercisePlayer({
                             className="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors"
                         >
                             {showDiagram ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                            {showDiagram ? "Hide Diagram" : "Show Diagram"}
+                            {showDiagram ? "Hide Diagrams" : "Show Diagrams"}
                         </button>
                     </div>
 
                     {showDiagram && (
-                        <div className="mb-6 animate-in fade-in duration-300">
-                            <Fretboard shapeData={shapeData} />
+                        <div className="animate-in fade-in duration-300">
+                            {/* Fretboard */}
+                            <div className="mb-6">
+                                <Fretboard shapeData={shapeData} />
+                            </div>
+
+                            {/* Chords */}
+                            <div className="grid grid-cols-1 xl:grid-cols-3 gap-6 mb-2">
+                                <div className="col-span-1 xl:col-span-1 bg-black/20 p-5 rounded-xl flex flex-col justify-center">
+                                    <h4 className="text-primary font-semibold mb-2 text-sm uppercase tracking-wider">Relevant Progression</h4>
+                                    <p className="text-slate-100 text-2xl font-bold mb-3">{shapeData.chordProgressions}</p>
+                                    <p className="text-slate-300 text-sm leading-relaxed">{shapeData.chordVoicingsDesc}</p>
+                                </div>
+                                <div className="col-span-1 xl:col-span-2 flex items-center justify-start gap-4 overflow-x-auto pb-2">
+                                    {shapeData.actualChords && shapeData.actualChords.map((chord: any, idx: number) => (
+                                        <div key={idx} className="flex-shrink-0">
+                                            <ChordDiagram chord={chord} />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
                         </div>
                     )}
-                    
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="bg-black/20 p-4 rounded-lg">
-                            <h4 className="text-primary font-semibold mb-1 text-sm uppercase tracking-wider">Relevant Chords</h4>
-                            <p className="text-slate-200">{shapeData.chordProgressions}</p>
-                        </div>
-                        <div className="bg-black/20 p-4 rounded-lg">
-                            <h4 className="text-primary font-semibold mb-1 text-sm uppercase tracking-wider">Voicing Approach</h4>
-                            <p className="text-slate-200">{shapeData.chordVoicingsDesc}</p>
-                        </div>
-                    </div>
                 </div>
 
                 {exercise.dynamic ? (

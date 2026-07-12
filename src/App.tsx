@@ -3,14 +3,18 @@ import Timeline from './components/Timeline';
 import ExercisePlayer from './components/ExercisePlayer';
 import VexFlowTab from './components/VexFlowTab';
 import Fretboard from './components/Fretboard';
+import ChordDiagram from './components/ChordDiagram';
 import { generateRoutine, techniques } from './data/routines';
 import { KEY_OFFSETS } from './data/musicEngine';
+import type { ScaleFamily, ScaleQuality } from './data/musicEngine';
 import { Guitar, Printer } from 'lucide-react';
 
 export default function App() {
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [dayOfWeek, setDayOfWeek] = useState<string>("Monday");
-    const [key, setKey] = useState("Am");
+    const [key, setKey] = useState("A");
+    const [scaleFamily, setScaleFamily] = useState<ScaleFamily>("Pentatonic");
+    const [scaleQuality, setScaleQuality] = useState<ScaleQuality>("Minor");
 
     useEffect(() => {
         const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -21,12 +25,12 @@ export default function App() {
         window.print();
     };
 
-    const { routine: currentRoutine, shapeData } = generateRoutine(key, dayOfWeek);
+    const { routine: currentRoutine, shapeData } = generateRoutine(key, scaleFamily, scaleQuality, dayOfWeek);
 
     return (
         <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto flex flex-col gap-8">
             {/* Header */}
-            <header className="flex flex-col md:flex-row justify-between items-center gap-4 no-print">
+            <header className="flex flex-col xl:flex-row justify-between items-center gap-4 no-print">
                 <div className="flex items-center gap-3">
                     <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-primary to-indigo-500 flex items-center justify-center shadow-[0_0_20px_rgba(56,189,248,0.3)]">
                         <Guitar className="w-7 h-7 text-white" />
@@ -34,19 +38,34 @@ export default function App() {
                     <h1 className="text-3xl font-extrabold tracking-tight">FretFocus</h1>
                 </div>
                 
-                <div className="flex flex-wrap items-center justify-center gap-4">
-                    <select 
-                        value={key}
-                        onChange={(e) => {
-                            setKey(e.target.value);
-                            setCurrentStepIndex(0);
-                        }}
-                        className="bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors"
-                    >
-                        {Object.keys(KEY_OFFSETS).map(k => (
-                            <option key={k} value={k} className="bg-slate-800">{k} Pentatonic</option>
-                        ))}
-                    </select>
+                <div className="flex flex-wrap items-center justify-center gap-3">
+                    <div className="flex bg-white/5 border border-white/10 rounded-lg p-1">
+                        <select 
+                            value={key}
+                            onChange={(e) => { setKey(e.target.value); setCurrentStepIndex(0); }}
+                            className="bg-transparent text-white px-3 py-1 focus:outline-none focus:text-primary transition-colors cursor-pointer border-r border-white/10"
+                        >
+                            {Object.keys(KEY_OFFSETS).map(k => (
+                                <option key={k} value={k} className="bg-slate-800">{k}</option>
+                            ))}
+                        </select>
+                        <select 
+                            value={scaleQuality}
+                            onChange={(e) => { setScaleQuality(e.target.value as ScaleQuality); setCurrentStepIndex(0); }}
+                            className="bg-transparent text-white px-3 py-1 focus:outline-none focus:text-primary transition-colors cursor-pointer border-r border-white/10"
+                        >
+                            <option value="Minor" className="bg-slate-800">Minor</option>
+                            <option value="Major" className="bg-slate-800">Major</option>
+                        </select>
+                        <select 
+                            value={scaleFamily}
+                            onChange={(e) => { setScaleFamily(e.target.value as ScaleFamily); setCurrentStepIndex(0); }}
+                            className="bg-transparent text-white px-3 py-1 focus:outline-none focus:text-primary transition-colors cursor-pointer"
+                        >
+                            <option value="Pentatonic" className="bg-slate-800">Pentatonic</option>
+                            <option value="Blues" className="bg-slate-800">Blues (Coming Soon)</option>
+                        </select>
+                    </div>
                     
                     <select 
                         value={dayOfWeek}
@@ -54,10 +73,10 @@ export default function App() {
                             setDayOfWeek(e.target.value);
                             setCurrentStepIndex(0);
                         }}
-                        className="bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors"
+                        className="bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors cursor-pointer"
                     >
                         {Object.keys(techniques).map(day => (
-                            <option key={day} value={day} className="bg-slate-800">{day}</option>
+                            <option key={day} value={day} className="bg-slate-800">{day} Focus</option>
                         ))}
                     </select>
 
@@ -72,8 +91,8 @@ export default function App() {
 
             {/* Print Header */}
             <div className="print-only text-center border-b-2 border-black pb-4 mb-8">
-                <h1 className="text-3xl font-bold mb-2">Focused Pentatonic Routine</h1>
-                <p className="text-lg">Key: {key} Minor &nbsp;&nbsp;&nbsp; Shape: {shapeData.name}</p>
+                <h1 className="text-3xl font-bold mb-2">Focused {scaleFamily} Routine</h1>
+                <p className="text-lg">Key: {key} {scaleQuality} &nbsp;&nbsp;&nbsp; Shape: {shapeData.name}</p>
                 <p className="text-lg mt-2">Daily Focus ({dayOfWeek}): {techniques[dayOfWeek].name}</p>
             </div>
 
@@ -105,9 +124,13 @@ export default function App() {
                 <div className="break-inside-avoid border border-gray-300 p-6 rounded-lg text-center">
                     <h2 className="text-xl font-bold text-black mb-4">Shape Diagram</h2>
                     <Fretboard shapeData={shapeData} />
-                    <div className="mt-4 text-left border-t border-gray-300 pt-4">
-                        <p className="font-bold text-black">Chord Connections:</p>
-                        <p className="text-black">{shapeData.chordProgressions} - {shapeData.chordVoicingsDesc}</p>
+                    <div className="mt-8 text-left border-t border-gray-300 pt-6">
+                        <p className="font-bold text-black mb-2 text-lg">Chord Connections: {shapeData.chordProgressions}</p>
+                        <div className="flex justify-center gap-6 my-6">
+                            {shapeData.actualChords && shapeData.actualChords.map((chord: any, i: number) => (
+                                <ChordDiagram key={i} chord={chord} />
+                            ))}
+                        </div>
                     </div>
                 </div>
 
