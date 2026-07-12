@@ -23,6 +23,10 @@ body {
     box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
 }
 
+.print-only {
+    display: none;
+}
+
 /* Print Styles */
 @media print {
     body {
