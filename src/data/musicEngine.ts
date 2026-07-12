@@ -423,3 +423,68 @@ export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQua
         actualChords
     };
 }
+
+export function getAllDiatonicChords(key: string, quality: ScaleQuality, family: ScaleFamily) {
+    const CHROMATIC = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
+    
+    let progression: { numeral: string, q: string, offset: number }[] = [];
+    if (quality === 'Major') {
+        progression = [
+            { numeral: 'I', q: 'Major', offset: 0 },
+            { numeral: 'ii', q: 'Minor', offset: 2 },
+            { numeral: 'iii', q: 'Minor', offset: 4 },
+            { numeral: 'IV', q: 'Major', offset: 5 },
+            { numeral: 'V', q: 'Major', offset: 7 },
+            { numeral: 'vi', q: 'Minor', offset: 9 },
+            { numeral: 'vii°', q: 'Dim', offset: 11 }
+        ];
+    } else { // Minor
+        progression = [
+            { numeral: 'i', q: 'Minor', offset: 0 },
+            { numeral: 'ii°', q: 'Dim', offset: 2 },
+            { numeral: 'III', q: 'Major', offset: 3 },
+            { numeral: 'iv', q: 'Minor', offset: 5 },
+            { numeral: 'v', q: 'Minor', offset: 7 },
+            { numeral: 'VI', q: 'Major', offset: 8 },
+            { numeral: 'VII', q: 'Major', offset: 10 }
+        ];
+        if (family === 'Harmonic Minor') {
+            progression[4] = { numeral: 'V', q: 'Major', offset: 7 };
+            progression[6] = { numeral: 'vii°', q: 'Dim', offset: 11 };
+        }
+    }
+
+    return progression.map(c => {
+        const rootNoteIdx = (CHROMATIC.indexOf(key) + c.offset) % 12;
+        const rootNote = CHROMATIC[rootNoteIdx];
+        
+        const eStringOffset = (rootNoteIdx - 4 + 12) % 12; // distance from E
+        const aStringOffset = (rootNoteIdx - 9 + 12) % 12; // distance from A
+
+        let frets: (number | 'x')[] = [];
+        let barre: number = 0;
+        
+        if (c.q === 'Dim') {
+             barre = aStringOffset;
+             frets = ['x', barre, barre+1, barre+2, barre+1, 'x'];
+        } else if (eStringOffset <= aStringOffset) {
+            barre = eStringOffset;
+            if (c.q === 'Major') frets = [barre, barre+2, barre+2, barre+1, barre, barre];
+            else if (c.q === 'Minor') frets = [barre, barre+2, barre+2, barre, barre, barre];
+        } else {
+            barre = aStringOffset;
+            if (c.q === 'Major') frets = ['x', barre, barre+2, barre+2, barre+2, barre];
+            else if (c.q === 'Minor') frets = ['x', barre, barre+2, barre+2, barre+1, barre];
+        }
+
+        const qLabel = c.q === 'Major' ? '' : c.q === 'Minor' ? 'm' : 'dim';
+
+        return {
+            name: `${rootNote}${qLabel}`,
+            numeral: c.numeral,
+            quality: c.q,
+            barre: barre > 0 ? barre : undefined,
+            frets
+        };
+    });
+}

@@ -9,10 +9,11 @@ import { generateRoutine, techniques } from './data/routines';
 import { KEY_OFFSETS } from './data/musicEngine';
 import type { ScaleFamily, ScaleQuality } from './data/musicEngine';
 import type { CurriculumConfig } from './data/curriculum';
-import { Guitar, Printer, Map as MapIcon, Settings2 } from 'lucide-react';
+import { Guitar, Printer, Map as MapIcon, Settings2, ListMusic } from 'lucide-react';
+import ChordSandboxView from './components/ChordSandboxView';
 
 export default function App() {
-    const [viewMode, setViewMode] = useState<'curriculum' | 'sandbox'>('curriculum');
+    const [viewMode, setViewMode] = useState<'curriculum' | 'sandbox' | 'chords'>('curriculum');
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [dayOfWeek, setDayOfWeek] = useState<string>("Monday");
     const [key, setKey] = useState("A");
@@ -68,10 +69,16 @@ export default function App() {
                         >
                             <Settings2 className="w-4 h-4" /> Sandbox
                         </button>
+                        <button 
+                            onClick={() => setViewMode('chords')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'chords' ? 'bg-fuchsia-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            <ListMusic className="w-4 h-4" /> Chords
+                        </button>
                     </div>
                 </div>
                 
-                {viewMode === 'sandbox' && (
+                {(viewMode === 'sandbox' || viewMode === 'chords') && (
                     <div className="flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="flex bg-white/5 border border-white/10 rounded-lg p-1">
                             <select 
@@ -103,19 +110,21 @@ export default function App() {
                             </select>
                         </div>
                         
-                        <select 
-                            value={dayOfWeek}
-                            onChange={(e) => {
-                                setDayOfWeek(e.target.value);
-                                setCurrentStepIndex(0);
-                                setOverrideShapeId(undefined);
-                            }}
-                            className="bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors cursor-pointer"
-                        >
-                            {Object.keys(techniques).map(day => (
-                                <option key={day} value={day} className="bg-slate-800">{day} Focus</option>
-                            ))}
-                        </select>
+                        {viewMode === 'sandbox' && (
+                            <select 
+                                value={dayOfWeek}
+                                onChange={(e) => {
+                                    setDayOfWeek(e.target.value);
+                                    setCurrentStepIndex(0);
+                                    setOverrideShapeId(undefined);
+                                }}
+                                className="bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors cursor-pointer"
+                            >
+                                {Object.keys(techniques).map(day => (
+                                    <option key={day} value={day} className="bg-slate-800">{day} Focus</option>
+                                ))}
+                            </select>
+                        )}
 
                         <button 
                             onClick={handlePrint}
@@ -129,6 +138,13 @@ export default function App() {
 
             {viewMode === 'curriculum' ? (
                 <CurriculumView onSelectModule={handleSelectModule} />
+            ) : viewMode === 'chords' ? (
+                <ChordSandboxView 
+                    keyName={key} 
+                    quality={scaleQuality} 
+                    family={scaleFamily} 
+                    onSettingsClick={() => {}}
+                />
             ) : (
                 <>
                     {/* Print Header */}
