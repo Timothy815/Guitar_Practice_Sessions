@@ -149,8 +149,36 @@ function chunkIntoMeasures(notes: { str: number; fret: number }[], limit?: numbe
         const chunk = list.slice(i, i + 8);
         measures.push(chunk.map(n => ({ positions: [{ str: n.str, fret: n.fret }], duration: "8" })));
     }
-    // Make the last note a quarter or half note if it ends a phrase? 
-    // We will leave them as 8th notes for now.
+    return measures;
+}
+
+function generateChordProgressionMeasures(shapeData: any): TabNoteData[][] {
+    if (!shapeData.actualChords || shapeData.actualChords.length === 0) return [];
+    
+    const measures: TabNoteData[][] = [];
+    
+    for (const chord of shapeData.actualChords) {
+        const positions: {str: number, fret: number|string}[] = [];
+        for (let strIdx = 0; strIdx < 6; strIdx++) {
+            const fretVal = chord.frets[strIdx];
+            if (fretVal !== 'x') {
+                positions.push({ str: 6 - strIdx, fret: fretVal });
+            }
+        }
+        
+        // Strumming pattern: Half note, Quarter, Quarter
+        measures.push([
+            { positions, duration: "h" },
+            { positions, duration: "q" },
+            { positions, duration: "q" }
+        ]);
+    }
+    
+    // If progression is only 2 chords, repeat the first one to make it 3 measures long
+    if (measures.length === 2) {
+        measures.push(measures[0]);
+    }
+    
     return measures;
 }
 
@@ -332,10 +360,10 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             vexflowMeasures: chunkIntoMeasures(sequence3, 24) // Show 3 measures of the sequence
         },
         {
-            id: "rhythm",
-            title: "4. Rhythm exercises",
+            id: "melodic-rhythm",
+            title: "4. Melodic rhythm",
             duration: 300,
-            description: "Rhythm transforms scales into music. Play a simple 3-note lick inside this shape, first as slow quarter notes, then double time as eighth notes.",
+            description: "Rhythm transforms scales into music. Play a simple 3-note melodic lick inside this shape, first as slow quarter notes, then double time as eighth notes.",
             focusPoints: [
                 "Use a metronome if possible",
                 "Feel the space between the quarter notes",
@@ -357,8 +385,20 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             ]
         },
         {
+            id: "harmonic-rhythm",
+            title: "5. Harmonic rhythm",
+            duration: 300,
+            description: `Practice the harmonic structure of this position. Strum the chords of the progression (${shape.chordProgressions}) to internalize the tonality of the shape.`,
+            focusPoints: [
+                "Ensure all notes in the chord ring out clearly.",
+                "Practice a steady rhythm: one long strum followed by two short strums.",
+                "Keep your hand moving consistently."
+            ],
+            vexflowMeasures: generateChordProgressionMeasures(shape)
+        },
+        {
             id: "technique",
-            title: "5. Technique of the day",
+            title: "6. Technique of the day",
             duration: 300,
             description: "Focus purely on how the notes are articulated rather than what notes you play. Execute the prescribed tab below using strictly the technique of the day.",
             dynamic: true,
@@ -366,7 +406,7 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
         },
         {
             id: "improv",
-            title: "6. Controlled improvisation",
+            title: "7. Controlled improvisation",
             duration: 300,
             description: `Improvise over a backing track in ${key} ${quality} using ONLY ${shape.name}. Do not noodle endlessly. Apply strict constraints to force creativity.`,
             focusPoints: [
