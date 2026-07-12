@@ -16,31 +16,49 @@ export default function VexFlowTab({ measures }: VexFlowTabProps) {
         
         const renderer = new Renderer(containerRef.current, Renderer.Backends.SVG);
         
-        // Calculate dynamic width based on measures
-        const measureWidth = 250;
-        const totalWidth = (measures.length * measureWidth) + 50;
+        // Standardize the width for print and screen
+        const MAX_WIDTH = 800;
+        const TARGET_MEASURES_PER_LINE = 3;
+        const rowHeight = 130;
         
-        renderer.resize(totalWidth, 150);
+        // Group measures into lines
+        const lines: TabNoteData[][][] = [];
+        for (let i = 0; i < measures.length; i += TARGET_MEASURES_PER_LINE) {
+            lines.push(measures.slice(i, i + TARGET_MEASURES_PER_LINE));
+        }
+        
+        const totalHeight = lines.length * rowHeight + 20;
+        renderer.resize(MAX_WIDTH + 20, totalHeight);
         const context = renderer.getContext();
         
-        let currentX = 10;
-        
-        measures.forEach((measureNotes, index) => {
-            const stave = new TabStave(currentX, 20, measureWidth);
-            if (index === 0) stave.addClef('tab');
-            stave.setContext(context).draw();
+        lines.forEach((lineMeasures, lineIndex) => {
+            const currentY = 20 + (lineIndex * rowHeight);
             
-            if (measureNotes.length > 0) {
-                const notes = measureNotes.map(n => 
-                    new TabNote({
-                        positions: n.positions.map(p => ({ str: p.str, fret: p.fret.toString() })),
-                        duration: n.duration || 'q'
-                    })
-                );
+            // Stretch measures in this line so the line is always full width
+            const currentMeasureWidth = MAX_WIDTH / lineMeasures.length;
+            
+            let currentX = 10;
+            
+            lineMeasures.forEach((measureNotes, measureIndexInLine) => {
+                const stave = new TabStave(currentX, currentY, currentMeasureWidth);
                 
-                Formatter.FormatAndDraw(context, stave, notes);
-            }
-            currentX += measureWidth;
+                // Only add clef at the beginning of each new line
+                if (measureIndexInLine === 0) stave.addClef('tab');
+                
+                stave.setContext(context).draw();
+                
+                if (measureNotes.length > 0) {
+                    const notes = measureNotes.map(n => 
+                        new TabNote({
+                            positions: n.positions.map(p => ({ str: p.str, fret: p.fret.toString() })),
+                            duration: n.duration || 'q'
+                        })
+                    );
+                    
+                    Formatter.FormatAndDraw(context, stave, notes);
+                }
+                currentX += currentMeasureWidth;
+            });
         });
 
     }, [measures]);
