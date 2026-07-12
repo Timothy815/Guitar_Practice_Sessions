@@ -46,7 +46,7 @@ export default function VexFlowTab({ measures }: VexFlowTabProps) {
     }, [measures]);
 
     return (
-        <div className="overflow-x-auto w-full bg-white p-4 rounded-xl border border-gray-200 my-4 no-print flex justify-center shadow-inner">
+        <div className="overflow-x-auto w-full bg-white p-4 rounded-xl border border-gray-200 my-4 flex justify-center shadow-inner print:shadow-none print:border-none print:p-0">
             <div ref={containerRef} />
         </div>
     );
