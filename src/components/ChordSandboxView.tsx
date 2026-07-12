@@ -69,43 +69,55 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
     const startTapping = () => {
         setIsTapping(true);
         tempRhythmRef.current = [];
-        lastTapTimeRef.current = performance.now();
+        lastTapTimeRef.current = 0; // 0 means waiting for first tap
     };
 
     const handleTap = () => {
         if (!isTapping) return;
         const now = performance.now();
-        const duration = (now - lastTapTimeRef.current) / 1000.0; // in seconds
         
-        // Discard the very first tap duration since it's just the start point
-        if (tempRhythmRef.current.length === 0 && duration > 5) {
-            // Ignore if it's been a long time since hitting 'Start'
+        if (lastTapTimeRef.current === 0) {
+            // First tap, just start the timer
             lastTapTimeRef.current = now;
             return;
         }
 
+        const duration = (now - lastTapTimeRef.current) / 1000.0; // in seconds
         tempRhythmRef.current.push(duration);
         lastTapTimeRef.current = now;
     };
 
     const finishTapping = () => {
         setIsTapping(false);
-        // We add the final duration from the last tap to the finish
-        const now = performance.now();
-        const duration = (now - lastTapTimeRef.current) / 1000.0;
-        if (duration < 5) {
-            tempRhythmRef.current.push(duration);
-        }
         
+        // Do NOT use the time between the last tap and clicking 'Done'.
+        // Instead, to complete the final note's duration, duplicate the last recorded duration
+        // (or use a default if they only tapped once or twice).
         if (tempRhythmRef.current.length > 0) {
-            // Remove the first ridiculously long duration if the user waited before tapping
-            if (tempRhythmRef.current[0] > 5) {
-                tempRhythmRef.current.shift();
-            }
+            const lastDur = tempRhythmRef.current[tempRhythmRef.current.length - 1];
+            tempRhythmRef.current.push(lastDur); // Assume last note rings as long as the previous one
+            
             setCustomRhythm([...tempRhythmRef.current]);
             setStyle('custom');
         }
     };
+
+    // Spacebar listener for tapping
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (isTapping && e.code === 'Space') {
+                e.preventDefault(); // prevent page scroll
+                handleTap();
+            }
+        };
+
+        if (isTapping) {
+            window.addEventListener('keydown', handleKeyDown);
+        }
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown);
+        };
+    }, [isTapping]);
 
     const handleImportMIDI = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
