@@ -347,9 +347,29 @@ export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQua
         actualFrets[str] = shape.relativeFrets[str].map(f => f + baseFret);
     }
 
+    const CHROMATIC = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
+    const MAJOR_OFFSETS: Record<string, number> = {
+        'I': 0, 'i': 0, 'ii': 2, 'II': 2, 'iii': 4, 'III': 4,
+        'IV': 5, 'iv': 5, 'V': 7, 'v': 7, 'vi': 9, 'VI': 9,
+        'vii': 11, 'VII': 11, 'bVII': 10
+    };
+    const MINOR_OFFSETS: Record<string, number> = {
+        'i': 0, 'I': 0, 'ii': 2, 'II': 2, 'III': 3, 'iii': 3,
+        'iv': 5, 'IV': 5, 'v': 7, 'V': 7, 'VI': 8, 'vi': 8,
+        'VII': 10, 'vii': 10, 'bVII': 10
+    };
+    const offsetMap = quality === 'Major' ? MAJOR_OFFSETS : MINOR_OFFSETS;
+
     const actualChords = shape.chords.map(chord => {
+        const cleanNumeral = chord.numeral.replace(/°/g, '');
+        const offset = offsetMap[cleanNumeral] ?? 0;
+        
+        const keyIdx = CHROMATIC.indexOf(key);
+        const rootNote = CHROMATIC[(keyIdx + offset) % 12];
+        const qLabel = chord.quality === 'Major' ? '' : chord.quality === 'Minor' ? 'm' : 'dim';
+        
         return {
-            name: `${key} ${chord.numeral}`,
+            name: `${rootNote}${qLabel} (${chord.numeral})`,
             numeral: chord.numeral,
             quality: chord.quality,
             barre: chord.barreRelative !== undefined ? chord.barreRelative + baseFret : undefined,
