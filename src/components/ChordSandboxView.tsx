@@ -66,36 +66,68 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         setDraggedIdx(null);
     };
 
-    const startTapping = () => {
-        setIsTapping(true);
-        tempRhythmRef.current = [];
-        lastTapTimeRef.current = 0; // 0 means waiting for first tap
-    };
+    const isSpaceDownRef = useRef(false);
 
-    const handleTap = () => {
-        if (!isTapping) return;
+    const handleDown = () => {
+        if (!isTapping || isSpaceDownRef.current) return;
+        isSpaceDownRef.current = true;
         const now = performance.now();
         
         if (lastTapTimeRef.current === 0) {
-            // First tap, just start the timer
             lastTapTimeRef.current = now;
             return;
         }
 
-        const duration = (now - lastTapTimeRef.current) / 1000.0; // in seconds
-        tempRhythmRef.current.push(duration);
+        const restDur = (now - lastTapTimeRef.current) / 1000.0; // in seconds
+        if (restDur > 0.01) {
+            tempRhythmRef.current.push(-restDur); // negative for rest
+        }
         lastTapTimeRef.current = now;
+    };
+
+    const handleUp = () => {
+        if (!isTapping || !isSpaceDownRef.current) return;
+        isSpaceDownRef.current = false;
+        const now = performance.now();
+        
+        if (lastTapTimeRef.current !== 0) {
+            const soundDur = (now - lastTapTimeRef.current) / 1000.0;
+            if (soundDur > 0.01) {
+                tempRhythmRef.current.push(soundDur); // positive for sound
+            }
+            lastTapTimeRef.current = now;
+        }
+    };
+
+    const startTapping = () => {
+        setIsTapping(true);
+        tempRhythmRef.current = [];
+        lastTapTimeRef.current = 0; // 0 means waiting for first tap
+        isSpaceDownRef.current = false;
     };
 
     const finishTapping = () => {
         setIsTapping(false);
         
-        // Do NOT use the time between the last tap and clicking 'Done'.
-        // Instead, to complete the final note's duration, duplicate the last recorded duration
-        // (or use a default if they only tapped once or twice).
+        if (isSpaceDownRef.current) {
+            handleUp();
+        }
+
         if (tempRhythmRef.current.length > 0) {
-            const lastDur = tempRhythmRef.current[tempRhythmRef.current.length - 1];
-            tempRhythmRef.current.push(lastDur); // Assume last note rings as long as the previous one
+            // Find the last rest to duplicate, to round out the measure cleanly
+            let lastRest = 0;
+            for (let i = tempRhythmRef.current.length - 1; i >= 0; i--) {
+                if (tempRhythmRef.current[i] < 0) {
+                    lastRest = tempRhythmRef.current[i];
+                    break;
+                }
+            }
+            if (lastRest < 0) {
+                tempRhythmRef.current.push(lastRest);
+            } else if (tempRhythmRef.current.length > 0 && tempRhythmRef.current[tempRhythmRef.current.length - 1] > 0) {
+                // If they never rested, duplicate the last sound duration as a rest to give some loop padding
+                tempRhythmRef.current.push(-tempRhythmRef.current[tempRhythmRef.current.length - 1]);
+            }
             
             setCustomRhythm([...tempRhythmRef.current]);
             setStyle('custom');
@@ -106,18 +138,28 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (isTapping && e.code === 'Space') {
-                e.preventDefault(); // prevent page scroll
-                handleTap();
+                e.preventDefault();
+                handleDown();
+            }
+        };
+        const handleKeyUp = (e: KeyboardEvent) => {
+            if (isTapping && e.code === 'Space') {
+                e.preventDefault();
+                handleUp();
             }
         };
 
         if (isTapping) {
             window.addEventListener('keydown', handleKeyDown);
+            window.addEventListener('keyup', handleKeyUp);
         }
         return () => {
             window.removeEventListener('keydown', handleKeyDown);
+            window.removeEventListener('keyup', handleKeyUp);
         };
     }, [isTapping]);
+
+    // (Omitted unchanged code replaced above)
 
     const handleImportMIDI = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -138,15 +180,15 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
 
             if (mainTrack && mainTrack.notes.length > 0) {
                 const newRhythm: number[] = [];
-                for (let i = 0; i < mainTrack.notes.length - 1; i++) {
-                    const currentNote = mainTrack.notes[i];
-                    const nextNote = mainTrack.notes[i+1];
-                    const diff = nextNote.time - currentNote.time;
-                    if (diff > 0.01) { // filter out simultaneous chord notes
-                        newRhythm.push(diff);
+                let lastTime = 0;
+                mainTrack.notes.forEach(note => {
+                    const restDur = note.time - lastTime;
+                    if (restDur > 0.05) {
+                        newRhythm.push(-restDur); // rest
                     }
-                }
-                newRhythm.push(mainTrack.notes[mainTrack.notes.length - 1].duration);
+                    newRhythm.push(note.duration); // sounding
+                    lastTime = note.time + note.duration;
+                });
                 
                 if (newRhythm.length > 0) {
                     setCustomRhythm(newRhythm);
@@ -164,16 +206,26 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         const track = new MidiWriter.Track();
         track.addEvent(new MidiWriter.ProgramChangeEvent({instrument: 25})); // Acoustic Guitar
 
-        customRhythm.forEach((durInSeconds) => {
-            const beats = durInSeconds / (60.0 / bpm);
-            const ticks = beats * 128; // midi-writer-js default ticks per beat
-            
-            const note = new MidiWriter.NoteEvent({
-                pitch: ['C4'], // Placeholder note for rhythm
-                duration: `T${Math.round(ticks)}`,
-                velocity: 100
-            });
-            track.addEvent(note);
+        let accumulatedWait = 0;
+        customRhythm.forEach((val) => {
+            if (val > 0) {
+                const durInSeconds = val;
+                const beats = durInSeconds / (60.0 / bpm);
+                const ticks = beats * 128;
+                
+                const note = new MidiWriter.NoteEvent({
+                    pitch: ['C4'],
+                    duration: `T${Math.max(1, Math.round(ticks))}`,
+                    wait: accumulatedWait > 0 ? `T${Math.round(accumulatedWait)}` : '0',
+                    velocity: 100
+                });
+                track.addEvent(note);
+                accumulatedWait = 0;
+            } else {
+                const restInSeconds = Math.abs(val);
+                const beats = restInSeconds / (60.0 / bpm);
+                accumulatedWait += beats * 128;
+            }
         });
 
         const writer = new MidiWriter.Writer(track);
@@ -288,17 +340,14 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             
             if (style === 'folk') {
                 if (currentNoteRef.current === 0) {
-                    // Down strum
                     midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat * 2, gain: 0.8 }));
                     nextNoteTimeRef.current += secondsPerBeat * 2;
                     currentNoteRef.current = 1;
                 } else if (currentNoteRef.current === 1) {
-                    // Down strum
                     midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
                     nextNoteTimeRef.current += secondsPerBeat;
                     currentNoteRef.current = 2;
                 } else if (currentNoteRef.current === 2) {
-                    // Up strum (reverse)
                     [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
                     nextNoteTimeRef.current += secondsPerBeat;
                     currentNoteRef.current = 0;
@@ -306,7 +355,6 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                 }
             } else if (style === 'rock') {
                 if (currentNoteRef.current === 0) {
-                    // Power chord chunk
                     instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
                     instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
                     nextNoteTimeRef.current += secondsPerBeat;
@@ -317,7 +365,6 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     nextNoteTimeRef.current += secondsPerBeat;
                     currentNoteRef.current = 2;
                 } else if (currentNoteRef.current === 2) {
-                    // Full chord
                     midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: secondsPerBeat * 2, gain: 0.8 }));
                     nextNoteTimeRef.current += secondsPerBeat * 2;
                     currentNoteRef.current = 0;
@@ -339,52 +386,53 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     currentMeasureRef.current++;
                 }
             } else if (style === 'arpeggio') {
-                // Fixed 8-note sequence (4 beats of 8th notes)
                 const arpNotes = [midiNotes[0], midiNotes[1], midiNotes[2], midiNotes[3] || midiNotes[2], midiNotes[2], midiNotes[1], midiNotes[0], midiNotes[1]];
                 if (currentNoteRef.current < 8) {
                     instrumentRef.current?.play(arpNotes[currentNoteRef.current].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
-                    nextNoteTimeRef.current += secondsPerBeat / 2; // 8th notes
+                    nextNoteTimeRef.current += secondsPerBeat / 2;
                     currentNoteRef.current++;
                 } else {
                     currentNoteRef.current = 0;
-                    // Note: currentMeasureRef is incremented below based on time, wait no, we must increment it here
-                    // Actually, if we increment here we need to continue the loop without playing a note, which is fine
                     currentMeasureRef.current++;
                 }
             } else if (style === 'funk') {
                 const sixteenth = secondsPerBeat / 4;
                 if (currentNoteRef.current === 0) {
                     midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.9 }));
-                    nextNoteTimeRef.current += sixteenth * 3; // wait 3 16ths
+                    nextNoteTimeRef.current += sixteenth * 3;
                     currentNoteRef.current = 1;
                 } else if (currentNoteRef.current === 1) {
                     [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.7 }));
-                    nextNoteTimeRef.current += sixteenth * 5; // skip beat 2 downbeat
+                    nextNoteTimeRef.current += sixteenth * 5;
                     currentNoteRef.current = 2;
                 } else if (currentNoteRef.current === 2) {
                     midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth * 2, gain: 0.8 }));
-                    nextNoteTimeRef.current += sixteenth * 8; // finish measure
+                    nextNoteTimeRef.current += sixteenth * 8;
                     currentNoteRef.current = 0;
                     currentMeasureRef.current++;
                 }
             } else if (style === 'custom') {
                 if (customRhythm.length === 0) {
-                    // Fallback to single strum if empty
                     midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.8 }));
                     nextNoteTimeRef.current += secondsPerBeat * 4;
                     currentNoteRef.current = 0;
                     currentMeasureRef.current++;
                 } else {
-                    const dur = customRhythm[currentNoteRef.current];
+                    const val = customRhythm[currentNoteRef.current];
                     
-                    // Add some variance based on index for a realistic strum
-                    if (currentNoteRef.current % 2 === 0) {
-                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: dur, gain: 0.8 }));
+                    if (val > 0) {
+                        // Sounding note
+                        if (currentNoteRef.current % 2 === 0) {
+                            midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.8 }));
+                        } else {
+                            [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.6 }));
+                        }
+                        nextNoteTimeRef.current += val;
                     } else {
-                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: dur, gain: 0.6 }));
+                        // Rest
+                        nextNoteTimeRef.current += Math.abs(val);
                     }
                     
-                    nextNoteTimeRef.current += dur;
                     currentNoteRef.current++;
                     
                     if (currentNoteRef.current >= customRhythm.length) {
@@ -467,14 +515,18 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 {isTapping ? (
                                     <>
                                         <button 
-                                            onClick={handleTap}
-                                            className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all active:scale-95"
+                                            onMouseDown={handleDown}
+                                            onMouseUp={handleUp}
+                                            onMouseLeave={handleUp}
+                                            onTouchStart={handleDown}
+                                            onTouchEnd={handleUp}
+                                            className="px-6 py-2.5 bg-indigo-500 hover:bg-indigo-400 text-white font-bold rounded-lg shadow-lg shadow-indigo-500/20 transition-all active:scale-95 active:bg-indigo-600 select-none"
                                         >
-                                            TAP!
+                                            TAP (Hold & Release)
                                         </button>
                                         <button 
                                             onClick={finishTapping}
-                                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-all"
+                                            className="px-4 py-2 bg-emerald-500 hover:bg-emerald-400 text-white font-bold rounded-lg transition-all"
                                         >
                                             Done
                                         </button>
