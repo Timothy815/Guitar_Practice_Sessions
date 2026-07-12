@@ -1,6 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Square, Settings2, Trash2 } from 'lucide-react';
+import { Play, Square, Settings2, Trash2, Download, Upload } from 'lucide-react';
 import Soundfont from 'soundfont-player';
+import { Midi } from '@tonejs/midi';
+// @ts-ignore
+import MidiWriter from 'midi-writer-js';
 import { getAllDiatonicChords } from '../data/musicEngine';
 import type { ScaleFamily, ScaleQuality } from '../data/musicEngine';
 import ChordDiagram from './ChordDiagram';
@@ -102,6 +105,72 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             setCustomRhythm([...tempRhythmRef.current]);
             setStyle('custom');
         }
+    };
+
+    const handleImportMIDI = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const midi = new Midi(arrayBuffer);
+            
+            let maxNotes = 0;
+            let mainTrack = midi.tracks[0];
+            midi.tracks.forEach(t => {
+                if (t.notes.length > maxNotes) {
+                    maxNotes = t.notes.length;
+                    mainTrack = t;
+                }
+            });
+
+            if (mainTrack && mainTrack.notes.length > 0) {
+                const newRhythm: number[] = [];
+                for (let i = 0; i < mainTrack.notes.length - 1; i++) {
+                    const currentNote = mainTrack.notes[i];
+                    const nextNote = mainTrack.notes[i+1];
+                    const diff = nextNote.time - currentNote.time;
+                    if (diff > 0.01) { // filter out simultaneous chord notes
+                        newRhythm.push(diff);
+                    }
+                }
+                newRhythm.push(mainTrack.notes[mainTrack.notes.length - 1].duration);
+                
+                if (newRhythm.length > 0) {
+                    setCustomRhythm(newRhythm);
+                    setStyle('custom');
+                }
+            }
+        } catch (err) {
+            console.error("Failed to parse MIDI file:", err);
+        }
+    };
+
+    const handleExportMIDI = () => {
+        if (customRhythm.length === 0) return;
+        
+        const track = new MidiWriter.Track();
+        track.addEvent(new MidiWriter.ProgramChangeEvent({instrument: 25})); // Acoustic Guitar
+
+        customRhythm.forEach((durInSeconds) => {
+            const beats = durInSeconds / (60.0 / bpm);
+            const ticks = beats * 128; // midi-writer-js default ticks per beat
+            
+            const note = new MidiWriter.NoteEvent({
+                pitch: ['C4'], // Placeholder note for rhythm
+                duration: `T${Math.round(ticks)}`,
+                velocity: 100
+            });
+            track.addEvent(note);
+        });
+
+        const writer = new MidiWriter.Writer(track);
+        const dataUri = writer.dataUri();
+        
+        const link = document.createElement('a');
+        link.href = dataUri;
+        link.download = 'custom_rhythm.mid';
+        link.click();
     };
 
     const chords = getAllDiatonicChords(keyName, quality, family);
@@ -399,12 +468,39 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                         </button>
                                     </>
                                 ) : (
-                                    <button 
-                                        onClick={startTapping}
-                                        className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30 rounded-lg text-sm transition-all"
-                                    >
-                                        Record Tap
-                                    </button>
+                                    <>
+                                        <button 
+                                            onClick={startTapping}
+                                            className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30 rounded-lg text-sm transition-all"
+                                        >
+                                            Record Tap
+                                        </button>
+                                        <div className="flex items-center gap-1 border-l border-white/10 pl-2 ml-1">
+                                            <label 
+                                                htmlFor="midi-upload"
+                                                className="p-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg cursor-pointer transition-colors"
+                                                title="Import MIDI File"
+                                            >
+                                                <Upload className="w-4 h-4" />
+                                            </label>
+                                            <input 
+                                                id="midi-upload" 
+                                                type="file" 
+                                                accept=".mid,.midi" 
+                                                onChange={handleImportMIDI} 
+                                                className="hidden" 
+                                            />
+                                            {customRhythm.length > 0 && (
+                                                <button 
+                                                    onClick={handleExportMIDI}
+                                                    className="p-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg cursor-pointer transition-colors"
+                                                    title="Export MIDI File"
+                                                >
+                                                    <Download className="w-4 h-4" />
+                                                </button>
+                                            )}
+                                        </div>
+                                    </>
                                 )}
                                 {customRhythm.length > 0 && !isTapping && (
                                     <span className="text-xs text-emerald-400 font-mono ml-2">({customRhythm.length} beats)</span>
