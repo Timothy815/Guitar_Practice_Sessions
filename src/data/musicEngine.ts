@@ -89,6 +89,32 @@ export const MINOR_PENTATONIC: ScaleShape[] = [
     }
 ];
 
+export const MINOR_BLUES: ScaleShape[] = MINOR_PENTATONIC.map(shape => {
+    // Clone shape
+    const newShape = { ...shape, relativeFrets: JSON.parse(JSON.stringify(shape.relativeFrets)) };
+    
+    // Inject the flat 5th (b5)
+    if (shape.id === 1) {
+        newShape.relativeFrets[5].splice(1, 0, 1);
+        newShape.relativeFrets[3].splice(2, 0, 3);
+    } else if (shape.id === 2) {
+        newShape.relativeFrets[6].push(4);
+        newShape.relativeFrets[3].splice(1, 0, 1);
+        newShape.relativeFrets[1].push(4);
+    } else if (shape.id === 3) {
+        newShape.relativeFrets[6].splice(1, 0, 1);
+        newShape.relativeFrets[4].push(3);
+        newShape.relativeFrets[1].splice(1, 0, 1);
+    } else if (shape.id === 4) {
+        newShape.relativeFrets[4].splice(1, 0, 1);
+        newShape.relativeFrets[2].push(4);
+    } else if (shape.id === 5) {
+        newShape.relativeFrets[5].push(4);
+        newShape.relativeFrets[2].splice(1, 0, 2);
+    }
+    return newShape;
+});
+
 export const MAJOR_PENTATONIC: ScaleShape[] = [
     {
         id: 1, name: "Shape 1 (E Form)", description: "Root is on the 6th string. The bright, major sound.",
@@ -96,7 +122,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         relativeFrets: { 6: [0, 2], 5: [-1, 2], 4: [-1, 2], 3: [-1, 1], 2: [0, 2], 1: [0, 2] }, 
         rootPositions: [{ str: 6, fretIdx: 0 }, { str: 4, fretIdx: 1 }, { str: 1, fretIdx: 0 }],
         chordProgressions: "I - IV - V",
-        chordVoicingsDesc: "E-form major barre chord, transitioning into A-form major barres.",
+        chordVoicingsDesc: "E-form major barre chord.",
         chords: [
             { numeral: 'I', quality: '', frets: [0, 2, 2, 1, 0, 0], barreRelative: 0 },
             { numeral: 'IV', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 0 },
@@ -106,7 +132,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
     {
         id: 2, name: "Shape 2 (D Form)", description: "Root is on the 4th string.",
         baseOffset: 2,
-        relativeFrets: { 6: [0, 3], 5: [0, 2], 4: [0, 2], 3: [0, 2], 2: [0, 3], 1: [0, 3] },
+        relativeFrets: { 6: [0, 2], 5: [0, 2], 4: [0, 2], 3: [-1, 2], 2: [0, 3], 1: [0, 2] },
         rootPositions: [{ str: 4, fretIdx: 0 }, { str: 2, fretIdx: 1 }],
         chordProgressions: "I - V",
         chordVoicingsDesc: "D-form major shape.",
@@ -117,8 +143,8 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
     },
     {
         id: 3, name: "Shape 3 (C Form)", description: "Root is on the 5th string.",
-        baseOffset: 5,
-        relativeFrets: { 6: [0, 2], 5: [0, 3], 4: [0, 2], 3: [0, 2], 2: [1, 3], 1: [0, 2] },
+        baseOffset: 4,
+        relativeFrets: { 6: [0, 3], 5: [0, 3], 4: [0, 2], 3: [0, 2], 2: [1, 3], 1: [0, 3] },
         rootPositions: [{ str: 5, fretIdx: 0 }, { str: 2, fretIdx: 0 }],
         chordProgressions: "I - IV",
         chordVoicingsDesc: "C-form major shape.",
@@ -130,7 +156,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
     {
         id: 4, name: "Shape 4 (A Form)", description: "Root is on the 5th string.",
         baseOffset: 7,
-        relativeFrets: { 6: [0, 2], 5: [0, 2], 4: [0, 2], 3: [0, 2], 2: [0, 3], 1: [0, 2] },
+        relativeFrets: { 6: [0, 2], 5: [0, 2], 4: [-1, 2], 3: [-1, 2], 2: [0, 2], 1: [0, 2] },
         rootPositions: [{ str: 5, fretIdx: 1 }, { str: 3, fretIdx: 1 }],
         chordProgressions: "I - IV",
         chordVoicingsDesc: "A-form major barre chord.",
@@ -141,28 +167,52 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
     },
     {
         id: 5, name: "Shape 5 (G Form)", description: "Root is on the 6th and 3rd strings.",
-        baseOffset: 10,
-        relativeFrets: { 6: [0, 3], 5: [0, 3], 4: [0, 2], 3: [0, 2], 2: [1, 3], 1: [0, 3] },
+        baseOffset: 9,
+        relativeFrets: { 6: [0, 3], 5: [0, 2], 4: [0, 2], 3: [0, 2], 2: [0, 3], 1: [0, 3] },
         rootPositions: [{ str: 6, fretIdx: 0 }, { str: 3, fretIdx: 1 }, { str: 1, fretIdx: 0 }],
         chordProgressions: "I - vi",
         chordVoicingsDesc: "G-form major shape.",
         chords: [
             { numeral: 'I', quality: '', frets: [3, 2, 0, 0, 0, 3], barreRelative: 0 },
-            { numeral: 'vi', quality: 'm', frets: [0, 2, 2, 0, 0, 0], barreRelative: -1 } // Relative to fret 10, so E minor at fret 9? This is approximate.
+            { numeral: 'vi', quality: 'm', frets: [0, 2, 2, 0, 0, 0], barreRelative: -1 } 
         ]
     }
 ];
 
+export const MAJOR_BLUES: ScaleShape[] = MAJOR_PENTATONIC.map(shape => {
+    // Clone shape
+    const newShape = { ...shape, relativeFrets: JSON.parse(JSON.stringify(shape.relativeFrets)) };
+    
+    // Inject the flat 3rd (b3)
+    if (shape.id === 1) {
+        newShape.relativeFrets[6].push(3);
+        newShape.relativeFrets[3].splice(1, 0, 0);
+        newShape.relativeFrets[1].push(3);
+    } else if (shape.id === 2) {
+        newShape.relativeFrets[6].splice(1, 0, 1);
+        newShape.relativeFrets[4].push(3);
+        newShape.relativeFrets[1].splice(1, 0, 1);
+    } else if (shape.id === 3) {
+        newShape.relativeFrets[4].splice(1, 0, 1);
+        newShape.relativeFrets[2].push(4);
+    } else if (shape.id === 4) {
+        newShape.relativeFrets[5].push(3);
+        newShape.relativeFrets[2].splice(1, 0, 1);
+    } else if (shape.id === 5) {
+        newShape.relativeFrets[5].splice(1, 0, 1);
+        newShape.relativeFrets[3].push(3);
+    }
+    return newShape;
+});
+
+
 export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQuality, shapeId: number) {
     const keyOffset = KEY_OFFSETS[key] ?? 5; // Default A
     
-    // Select the correct scale definitions
     let shapeDefinition = MINOR_PENTATONIC;
-    if (quality === 'Major') {
-        shapeDefinition = MAJOR_PENTATONIC;
-    }
-    
-    // Will expand this switch later for Blues and Diatonic
+    if (family === 'Pentatonic' && quality === 'Major') shapeDefinition = MAJOR_PENTATONIC;
+    if (family === 'Blues' && quality === 'Minor') shapeDefinition = MINOR_BLUES;
+    if (family === 'Blues' && quality === 'Major') shapeDefinition = MAJOR_BLUES;
     
     const shape = shapeDefinition[shapeId - 1];
     
@@ -174,10 +224,7 @@ export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQua
         actualFrets[str] = shape.relativeFrets[str].map(f => f + baseFret);
     }
 
-    // Process Chords for this shape
     const actualChords = shape.chords.map(chord => {
-        // In reality, actual name should be mathematically derived from the numeral (e.g., IV in G is C)
-        // For visual display purposes right now, we append the numeral and key
         return {
             name: `${key} ${chord.numeral}`,
             numeral: chord.numeral,

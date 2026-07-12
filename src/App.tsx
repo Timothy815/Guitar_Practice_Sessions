@@ -63,7 +63,7 @@ export default function App() {
                             className="bg-transparent text-white px-3 py-1 focus:outline-none focus:text-primary transition-colors cursor-pointer"
                         >
                             <option value="Pentatonic" className="bg-slate-800">Pentatonic</option>
-                            <option value="Blues" className="bg-slate-800">Blues (Coming Soon)</option>
+                            <option value="Blues" className="bg-slate-800">Blues</option>
                         </select>
                     </div>
                     
