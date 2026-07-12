@@ -22,8 +22,15 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [bpm, setBpm] = useState(90);
-    const [style, setStyle] = useState('folk'); // 'folk' | 'rock'
+    const [style, setStyle] = useState('folk'); // 'folk' | 'rock' | 'waltz' | 'arpeggio' | 'funk' | 'custom'
     const [currentPlayIndex, setCurrentPlayIndex] = useState(-1);
+    const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+
+    // Tap recorder state
+    const [customRhythm, setCustomRhythm] = useState<number[]>([]);
+    const [isTapping, setIsTapping] = useState(false);
+    const lastTapTimeRef = useRef(0);
+    const tempRhythmRef = useRef<number[]>([]);
 
     const audioCtxRef = useRef<AudioContext | null>(null);
     const instrumentRef = useRef<Soundfont.Player | null>(null);
@@ -36,6 +43,66 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
     useEffect(() => {
         isPlayingRef.current = isPlaying;
     }, [isPlaying]);
+
+    const handleDragStart = (idx: number) => {
+        setDraggedIdx(idx);
+    };
+
+    const handleDragOver = (e: React.DragEvent, idx: number) => {
+        e.preventDefault(); // Necessary to allow dropping
+        if (draggedIdx === null || draggedIdx === idx) return;
+        
+        const newProg = [...progression];
+        const item = newProg.splice(draggedIdx, 1)[0];
+        newProg.splice(idx, 0, item);
+        setProgression(newProg);
+        setDraggedIdx(idx);
+    };
+
+    const handleDrop = () => {
+        setDraggedIdx(null);
+    };
+
+    const startTapping = () => {
+        setIsTapping(true);
+        tempRhythmRef.current = [];
+        lastTapTimeRef.current = performance.now();
+    };
+
+    const handleTap = () => {
+        if (!isTapping) return;
+        const now = performance.now();
+        const duration = (now - lastTapTimeRef.current) / 1000.0; // in seconds
+        
+        // Discard the very first tap duration since it's just the start point
+        if (tempRhythmRef.current.length === 0 && duration > 5) {
+            // Ignore if it's been a long time since hitting 'Start'
+            lastTapTimeRef.current = now;
+            return;
+        }
+
+        tempRhythmRef.current.push(duration);
+        lastTapTimeRef.current = now;
+    };
+
+    const finishTapping = () => {
+        setIsTapping(false);
+        // We add the final duration from the last tap to the finish
+        const now = performance.now();
+        const duration = (now - lastTapTimeRef.current) / 1000.0;
+        if (duration < 5) {
+            tempRhythmRef.current.push(duration);
+        }
+        
+        if (tempRhythmRef.current.length > 0) {
+            // Remove the first ridiculously long duration if the user waited before tapping
+            if (tempRhythmRef.current[0] > 5) {
+                tempRhythmRef.current.shift();
+            }
+            setCustomRhythm([...tempRhythmRef.current]);
+            setStyle('custom');
+        }
+    };
 
     const chords = getAllDiatonicChords(keyName, quality, family);
 
@@ -156,7 +223,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     currentNoteRef.current = 0;
                     currentMeasureRef.current++;
                 }
-            } else { // 'rock'
+            } else if (style === 'rock') {
                 if (currentNoteRef.current === 0) {
                     // Power chord chunk
                     instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
@@ -174,6 +241,75 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     nextNoteTimeRef.current += secondsPerBeat * 2;
                     currentNoteRef.current = 0;
                     currentMeasureRef.current++;
+                }
+            } else if (style === 'waltz') {
+                if (currentNoteRef.current === 0) {
+                    instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                    nextNoteTimeRef.current += secondsPerBeat;
+                    currentNoteRef.current = 1;
+                } else if (currentNoteRef.current === 1) {
+                    midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
+                    nextNoteTimeRef.current += secondsPerBeat;
+                    currentNoteRef.current = 2;
+                } else if (currentNoteRef.current === 2) {
+                    midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
+                    nextNoteTimeRef.current += secondsPerBeat;
+                    currentNoteRef.current = 0;
+                    currentMeasureRef.current++;
+                }
+            } else if (style === 'arpeggio') {
+                // Fixed 8-note sequence (4 beats of 8th notes)
+                const arpNotes = [midiNotes[0], midiNotes[1], midiNotes[2], midiNotes[3] || midiNotes[2], midiNotes[2], midiNotes[1], midiNotes[0], midiNotes[1]];
+                if (currentNoteRef.current < 8) {
+                    instrumentRef.current?.play(arpNotes[currentNoteRef.current].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+                    nextNoteTimeRef.current += secondsPerBeat / 2; // 8th notes
+                    currentNoteRef.current++;
+                } else {
+                    currentNoteRef.current = 0;
+                    // Note: currentMeasureRef is incremented below based on time, wait no, we must increment it here
+                    // Actually, if we increment here we need to continue the loop without playing a note, which is fine
+                    currentMeasureRef.current++;
+                }
+            } else if (style === 'funk') {
+                const sixteenth = secondsPerBeat / 4;
+                if (currentNoteRef.current === 0) {
+                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.9 }));
+                    nextNoteTimeRef.current += sixteenth * 3; // wait 3 16ths
+                    currentNoteRef.current = 1;
+                } else if (currentNoteRef.current === 1) {
+                    [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.7 }));
+                    nextNoteTimeRef.current += sixteenth * 5; // skip beat 2 downbeat
+                    currentNoteRef.current = 2;
+                } else if (currentNoteRef.current === 2) {
+                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth * 2, gain: 0.8 }));
+                    nextNoteTimeRef.current += sixteenth * 8; // finish measure
+                    currentNoteRef.current = 0;
+                    currentMeasureRef.current++;
+                }
+            } else if (style === 'custom') {
+                if (customRhythm.length === 0) {
+                    // Fallback to single strum if empty
+                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.8 }));
+                    nextNoteTimeRef.current += secondsPerBeat * 4;
+                    currentNoteRef.current = 0;
+                    currentMeasureRef.current++;
+                } else {
+                    const dur = customRhythm[currentNoteRef.current];
+                    
+                    // Add some variance based on index for a realistic strum
+                    if (currentNoteRef.current % 2 === 0) {
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: dur, gain: 0.8 }));
+                    } else {
+                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: dur, gain: 0.6 }));
+                    }
+                    
+                    nextNoteTimeRef.current += dur;
+                    currentNoteRef.current++;
+                    
+                    if (currentNoteRef.current >= customRhythm.length) {
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
+                    }
                 }
             }
 
@@ -239,9 +375,44 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                         >
                             <option value="folk">Folk Strum</option>
                             <option value="rock">Rock Power</option>
+                            <option value="waltz">Waltz (3/4)</option>
+                            <option value="arpeggio">Arpeggio (8ths)</option>
+                            <option value="funk">Funk (16ths)</option>
+                            <option value="custom">Custom Tapped</option>
                         </select>
                         
-                        <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5">
+                        {style === 'custom' && (
+                            <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
+                                {isTapping ? (
+                                    <>
+                                        <button 
+                                            onClick={handleTap}
+                                            className="px-4 py-1.5 bg-emerald-500 hover:bg-emerald-400 text-white rounded-lg text-sm font-bold shadow-[0_0_15px_rgba(16,185,129,0.4)] transition-all active:scale-95"
+                                        >
+                                            TAP!
+                                        </button>
+                                        <button 
+                                            onClick={finishTapping}
+                                            className="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white rounded-lg text-sm transition-all"
+                                        >
+                                            Done
+                                        </button>
+                                    </>
+                                ) : (
+                                    <button 
+                                        onClick={startTapping}
+                                        className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30 rounded-lg text-sm transition-all"
+                                    >
+                                        Record Tap
+                                    </button>
+                                )}
+                                {customRhythm.length > 0 && !isTapping && (
+                                    <span className="text-xs text-emerald-400 font-mono ml-2">({customRhythm.length} beats)</span>
+                                )}
+                            </div>
+                        )}
+                        
+                        <div className="flex items-center gap-2 bg-black/40 border border-white/10 rounded-lg px-3 py-1.5 ml-2">
                             <span className="text-slate-400 text-xs uppercase font-bold">BPM</span>
                             <input 
                                 type="number" 
@@ -278,10 +449,14 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                         {progression.map((chord, idx) => (
                             <div 
                                 key={idx}
-                                className={`relative bg-black/40 border p-4 rounded-xl flex items-center gap-4 transition-colors ${
+                                draggable
+                                onDragStart={() => handleDragStart(idx)}
+                                onDragOver={(e) => handleDragOver(e, idx)}
+                                onDrop={handleDrop}
+                                className={`relative bg-black/40 border p-4 rounded-xl flex items-center gap-4 cursor-grab active:cursor-grabbing transition-colors ${
                                     currentPlayIndex === idx 
                                         ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]' 
-                                        : 'border-white/10'
+                                        : draggedIdx === idx ? 'border-primary opacity-50' : 'border-white/10'
                                 }`}
                             >
                                 <div className="text-center">
