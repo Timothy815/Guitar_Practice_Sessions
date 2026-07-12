@@ -132,11 +132,11 @@ function buildTimeline() {
     timelineEl.innerHTML = '';
     routineData.forEach((step, index) => {
         const div = document.createElement('div');
-        div.className = \`timeline-item \${index === currentStepIndex ? 'active' : ''}\`;
-        div.innerHTML = \`
-            <h3>\${step.title.split('.')[1].trim()}</h3>
+        div.className = `timeline-item ${index === currentStepIndex ? 'active' : ''}`;
+        div.innerHTML = `
+            <h3>${step.title.split('.')[1].trim()}</h3>
             <span>5:00</span>
-        \`;
+        `;
         div.addEventListener('click', () => {
             currentStepIndex = index;
             resetTimer();
@@ -149,11 +149,11 @@ function buildTimeline() {
 function getTechniqueContent() {
     const day = daySelect.value;
     const tech = techniques[day];
-    return \`
-        <h3>\${tech.name}</h3>
-        <p>\${tech.desc}</p>
+    return `
+        <h3>${tech.name}</h3>
+        <p>${tech.desc}</p>
         <p>Choose one expressive device rather than trying to practice everything at once.</p>
-    \`;
+    `;
 }
 
 function updateView() {
@@ -168,7 +168,7 @@ function updateView() {
 
     // Update timeline highlight
     Array.from(timelineEl.children).forEach((child, idx) => {
-        child.className = \`timeline-item \${idx === currentStepIndex ? 'active' : ''}\`;
+        child.className = `timeline-item ${idx === currentStepIndex ? 'active' : ''}`;
     });
 
     // Update buttons
@@ -224,7 +224,7 @@ function changeStep(direction) {
 function updateTimerDisplay() {
     const minutes = Math.floor(timeRemaining / 60);
     const seconds = timeRemaining % 60;
-    timerEl.textContent = \`\${minutes.toString().padStart(2, '0')}:\${seconds.toString().padStart(2, '0')}\`;
+    timerEl.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
 }
 
 function handlePrint() {
@@ -232,12 +232,12 @@ function handlePrint() {
     let printHTML = '';
     routineData.forEach((step, index) => {
         let content = step.dynamicContent ? getTechniqueContent() : step.content;
-        printHTML += \`
+        printHTML += `
             <div class="print-section">
-                <h2>\${step.title}</h2>
-                \${content}
+                <h2>${step.title}</h2>
+                ${content}
             </div>
-        \`;
+        `;
     });
     printContainer.innerHTML = printHTML;
     window.print();
