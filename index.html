@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guitar Practice Routines</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Print Header -->
+        <div class="print-header">
+            <h1>Focused 30-Minute Pentatonic Routine</h1>
+            <p id="print-date">Date: ______________ Key: A minor</p>
+        </div>
+
+        <!-- Interactive Header -->
+        <header class="no-print">
+            <div class="logo">
+                <h1>FretFocus</h1>
+            </div>
+            <div class="controls">
+                <select id="key-select">
+                    <option value="Am">A Minor Pentatonic</option>
+                    <option value="Em">E Minor Pentatonic</option>
+                    <option value="Gm">G Minor Pentatonic</option>
+                </select>
+                <select id="day-select">
+                    <option value="Monday">Monday</option>
+                    <option value="Tuesday">Tuesday</option>
+                    <option value="Wednesday">Wednesday</option>
+                    <option value="Thursday">Thursday</option>
+                    <option value="Friday">Friday</option>
+                    <option value="Saturday">Saturday</option>
+                    <option value="Sunday">Sunday</option>
+                </select>
+                <button id="print-btn" class="btn primary">Print Routine</button>
+            </div>
+        </header>
+
+        <main>
+            <!-- Timeline (Left Sidebar) -->
+            <aside class="timeline" id="timeline">
+                <!-- Timeline items injected by JS -->
+            </aside>
+
+            <!-- Main Content Area -->
+            <section class="content-area">
+                <div class="glass-card main-card">
+                    <div class="card-header no-print">
+                        <h2 id="current-title">Warmup & Sync</h2>
+                        <div class="timer" id="timer">05:00</div>
+                    </div>
+                    
+                    <div class="card-body" id="current-content">
+                        <!-- Content injected by JS -->
+                    </div>
+
+                    <div class="card-footer no-print">
+                        <button id="prev-btn" class="btn outline" disabled>Previous</button>
+                        <button id="play-pause-btn" class="btn primary">Start</button>
+                        <button id="next-btn" class="btn outline">Next</button>
+                    </div>
+                </div>
+            </section>
+        </main>
+        
+        <!-- Print Full Routine Container -->
+        <div id="print-routine-container" class="print-only">
+            <!-- Full routine injected here for printing -->
+        </div>
+    </div>
+    <script src="app.js"></script>
+</body>
+</html>
