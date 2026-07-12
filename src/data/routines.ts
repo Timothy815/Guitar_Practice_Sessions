@@ -154,6 +154,105 @@ function chunkIntoMeasures(notes: { str: number; fret: number }[], limit?: numbe
     return measures;
 }
 
+// Helper to generate dynamic, tailored exercises for the Technique of the Day
+function generateTechniqueMeasures(dayOfWeek: string, notesAsc: {str: number, fret: number}[]): TabNoteData[][] {
+    // Grab notes on strings 2 and 3 for expressive techniques
+    const middleNotes = notesAsc.filter(n => n.str === 2 || n.str === 3);
+    if (middleNotes.length < 4) return chunkIntoMeasures(notesAsc, 8);
+    
+    // Group notes by string to ensure we pick pairs on the same string
+    const string3Notes = middleNotes.filter(n => n.str === 3);
+    const string2Notes = middleNotes.filter(n => n.str === 2);
+
+    const s3_n1 = string3Notes[0] || middleNotes[0];
+    const s3_n2 = string3Notes[1] || middleNotes[1];
+    
+    const s2_n1 = string2Notes[0] || middleNotes[2];
+    const s2_n2 = string2Notes[1] || middleNotes[3];
+
+    switch (dayOfWeek) {
+        case "Monday": // Slides
+            return [
+                [
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "q" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "q" }, // Slide up
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "h" }, // Slide down
+                ],
+                [
+                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "q" },
+                    { positions: [{ str: s2_n1.str, fret: s2_n2.fret }], duration: "q" }, // Slide up
+                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "h" }, // Slide down
+                ]
+            ];
+        case "Tuesday": // Hammer-ons
+            return [
+                [
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "8" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "8" }, // Hammer
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "8" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "8" }, // Hammer
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "q" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "q" }, // Hammer
+                ]
+            ];
+        case "Wednesday": // Pull-offs
+            return [
+                [
+                    { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "8" },
+                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "8" }, // Pull-off
+                    { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "8" },
+                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "8" }, // Pull-off
+                    { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "q" },
+                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "q" }, // Pull-off
+                ]
+            ];
+        case "Thursday": // Bends
+            return [
+                [
+                    { positions: [{ str: s3_n2.str, fret: s3_n2.fret }], duration: "h" }, // Bend up
+                    { positions: [{ str: s3_n2.str, fret: s3_n1.fret }], duration: "q" }, // Release
+                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "q" }, // Resolution
+                ]
+            ];
+        case "Friday": // Vibrato
+            return [
+                [
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "w" },
+                ],
+                [
+                    { positions: [{ str: s2_n1.str, fret: s2_n2.fret }], duration: "w" },
+                ]
+            ];
+        case "Saturday": // Double Stops
+            return [
+                [
+                    { positions: [
+                        { str: s3_n1.str, fret: s3_n1.fret },
+                        { str: s2_n1.str, fret: s2_n1.fret }
+                    ], duration: "q" },
+                    { positions: [
+                        { str: s3_n2.str, fret: s3_n2.fret },
+                        { str: s2_n2.str, fret: s2_n2.fret }
+                    ], duration: "q" },
+                    { positions: [
+                        { str: s3_n1.str, fret: s3_n1.fret },
+                        { str: s2_n1.str, fret: s2_n1.fret }
+                    ], duration: "h" },
+                ]
+            ];
+        case "Sunday":
+        default:
+            return [
+                [
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "8" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "8" }, // Hammer
+                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "q" }, 
+                    { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "h" }  // Vibrato
+                ]
+            ];
+    }
+}
+
 export function generateRoutine(key: string, family: ScaleFamily, quality: ScaleQuality, dayOfWeek: string): { routine: Exercise[], shapeData: any } {
     const shapeId = DAY_TO_SHAPE[dayOfWeek] || 1;
     const shape = getScaleData(key, family, quality, shapeId);
@@ -261,15 +360,9 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             id: "technique",
             title: "5. Technique of the day",
             duration: 300,
-            description: "Focus purely on how the notes are articulated rather than what notes you play. Technique adds the human voice to the guitar.",
+            description: "Focus purely on how the notes are articulated rather than what notes you play. Execute the prescribed tab below using strictly the technique of the day.",
             dynamic: true,
-            vexflowMeasures: [
-                [
-                    { positions: [{ str: lickNotes[0].str, fret: lickNotes[0].fret }], duration: "q" },
-                    { positions: [{ str: lickNotes[1].str, fret: lickNotes[1].fret }], duration: "q" },
-                    { positions: [{ str: lickNotes[2].str, fret: lickNotes[2].fret }], duration: "h" }
-                ]
-            ]
+            vexflowMeasures: generateTechniqueMeasures(dayOfWeek, allNotesAsc)
         },
         {
             id: "improv",
