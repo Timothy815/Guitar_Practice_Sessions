@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import Timeline from './components/Timeline';
 import ExercisePlayer from './components/ExercisePlayer';
+import VexFlowTab from './components/VexFlowTab';
 import { pentatonicRoutine, techniques } from './data/routines';
 import { Guitar, Printer } from 'lucide-react';
 
@@ -67,7 +68,7 @@ export default function App() {
             </div>
 
             {/* Main Content Layout */}
-            <main className="flex flex-col lg:flex-row gap-8 flex-1">
+            <main className="flex flex-col lg:flex-row gap-8 flex-1 no-print">
                 <Timeline 
                     routines={pentatonicRoutine}
                     currentStepIndex={currentStepIndex}
@@ -90,24 +91,36 @@ export default function App() {
             <div className="print-only space-y-8 mt-8">
                 {pentatonicRoutine.map((step, idx) => (
                     <div key={idx} className="break-inside-avoid border border-gray-300 p-6 rounded-lg">
-                        <h2 className="text-2xl font-bold mb-4 pb-2 border-b">{step.title} (5 min)</h2>
+                        <h2 className="text-2xl font-bold mb-4 pb-2 border-b border-gray-300 text-black">{step.title} <span className="text-gray-500 font-normal text-lg">({Math.floor(step.duration / 60)} min)</span></h2>
                         {step.dynamic ? (
                             <div>
-                                <h3 className="text-xl font-bold">Focus: {techniques[dayOfWeek].name}</h3>
-                                <p className="mt-2">{techniques[dayOfWeek].desc}</p>
-                                <p className="italic text-gray-600 mt-2">{step.description}</p>
+                                <h3 className="text-xl font-bold text-black mb-2">Focus: {techniques[dayOfWeek].name}</h3>
+                                <p className="mt-2 text-black leading-relaxed">{techniques[dayOfWeek].desc}</p>
+                                <p className="italic text-gray-700 mt-3 border-l-4 border-gray-300 pl-4">{step.description}</p>
                             </div>
                         ) : (
                             <div>
-                                <p className="mb-4">{step.description}</p>
-                                {step.focusPoints && (
-                                    <ul className="list-disc pl-6 mb-4">
-                                        {step.focusPoints.map((pt, i) => <li key={i}>{pt}</li>)}
-                                    </ul>
+                                <p className="mb-4 text-black leading-relaxed text-lg">{step.description}</p>
+                                
+                                {step.vexflowMeasures && (
+                                    <div className="my-6">
+                                        <VexFlowTab measures={step.vexflowMeasures} />
+                                    </div>
                                 )}
-                                <p className="italic text-gray-500 text-sm mt-4">
-                                    (Tablature visual available in digital version)
-                                </p>
+
+                                {step.focusPoints && (
+                                    <div className="mt-6 bg-gray-50 p-4 rounded-lg border border-gray-200">
+                                        <h3 className="font-bold text-black mb-3 tracking-wider uppercase text-sm">Focus Points</h3>
+                                        <ul className="list-none space-y-2">
+                                            {step.focusPoints.map((pt, i) => (
+                                                <li key={i} className="flex items-start gap-2 text-black">
+                                                    <span className="text-gray-400 font-bold">•</span>
+                                                    {pt}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>

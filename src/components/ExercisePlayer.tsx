@@ -69,25 +69,34 @@ export default function ExercisePlayer({
             </div>
 
             {/* Body */}
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 p-8 overflow-y-auto bg-gradient-to-b from-transparent to-black/10">
                 {exercise.dynamic ? (
-                    <div className="space-y-4">
-                        <h3 className="text-xl font-bold text-white/90">Focus: {tech.name}</h3>
-                        <p className="text-lg text-white/70 leading-relaxed">{tech.desc}</p>
-                        <p className="text-white/50 italic">{exercise.description}</p>
+                    <div className="space-y-6">
+                        <h3 className="text-2xl font-bold text-white tracking-wide flex items-center gap-3">
+                            <span className="w-2 h-8 bg-primary rounded-full"></span>
+                            Focus: {tech.name}
+                        </h3>
+                        <p className="text-xl text-slate-200 leading-relaxed max-w-3xl">{tech.desc}</p>
+                        <p className="text-slate-400 italic text-lg bg-white/5 p-4 rounded-lg border border-white/10">{exercise.description}</p>
                     </div>
                 ) : (
-                    <div className="space-y-6">
-                        <p className="text-lg text-white/80 leading-relaxed border-l-4 border-primary/50 pl-4 bg-primary/5 p-4 rounded-r-lg">
+                    <div className="space-y-8">
+                        <p className="text-xl text-slate-100 leading-relaxed border-l-4 border-primary/70 pl-6 bg-gradient-to-r from-primary/10 to-transparent py-4 rounded-r-xl">
                             {exercise.description}
                         </p>
                         
                         {exercise.focusPoints && (
-                            <div className="bg-white/5 p-5 rounded-xl">
-                                <h4 className="font-semibold text-primary mb-3 text-sm uppercase tracking-wider">Focus Points</h4>
-                                <ul className="list-disc pl-5 space-y-2 text-white/70">
+                            <div className="bg-gradient-to-br from-white/10 to-white/5 p-6 rounded-2xl border border-white/10 shadow-lg">
+                                <h4 className="font-bold text-primary mb-4 text-sm uppercase tracking-widest flex items-center gap-2">
+                                    <div className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse"></div>
+                                    Focus Points
+                                </h4>
+                                <ul className="list-none space-y-3">
                                     {exercise.focusPoints.map((point, i) => (
-                                        <li key={i}>{point}</li>
+                                        <li key={i} className="flex items-start gap-3 text-slate-200 text-lg">
+                                            <span className="text-primary/60 font-bold text-xl leading-none mt-1">✓</span>
+                                            {point}
+                                        </li>
                                     ))}
                                 </ul>
                             </div>
