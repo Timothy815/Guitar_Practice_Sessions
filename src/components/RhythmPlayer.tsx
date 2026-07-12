@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Square } from 'lucide-react';
+import { Play, Square, Repeat } from 'lucide-react';
 import Soundfont from 'soundfont-player';
 import type { TabNoteData } from '../data/routines';
 
@@ -20,6 +20,12 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
     const [bpm, setBpm] = useState(80);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
+    const [isLooping, setIsLooping] = useState(false);
+    const isLoopingRef = useRef(false);
+    
+    useEffect(() => {
+        isLoopingRef.current = isLooping;
+    }, [isLooping]);
     
     const audioCtxRef = useRef<AudioContext | null>(null);
     const instrumentRef = useRef<Soundfont.Player | null>(null);
@@ -108,9 +114,12 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         
         while (nextNoteTimeRef.current < audioCtxRef.current.currentTime + scheduleAheadTime) {
             if (currentMeasureRef.current >= measures.length) {
-                // Done playing
-                setIsPlaying(false);
-                break;
+                if (isLoopingRef.current) {
+                    currentMeasureRef.current = 0;
+                } else {
+                    setIsPlaying(false);
+                    break;
+                }
             }
 
             const measure = measures[currentMeasureRef.current];
@@ -199,6 +208,15 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                     ) : (
                         <Play className="w-5 h-5 fill-current ml-1" />
                     )}
+                </button>
+                <button 
+                    onClick={() => setIsLooping(!isLooping)}
+                    className={`flex items-center justify-center w-10 h-10 rounded-full transition-all ${
+                        isLooping ? 'bg-primary/20 text-primary border border-primary/50' : 'bg-white/5 text-slate-400 hover:bg-white/10'
+                    }`}
+                    title="Toggle Loop"
+                >
+                    <Repeat className="w-4 h-4" />
                 </button>
 
                 <div className="flex flex-col">
