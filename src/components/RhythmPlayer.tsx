@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Square } from 'lucide-react';
+import Soundfont from 'soundfont-player';
 import type { TabNoteData } from '../data/routines';
 
 interface RhythmPlayerProps {
@@ -18,7 +19,10 @@ const STRING_MIDI_BASE = {
 export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
     const [bpm, setBpm] = useState(80);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+    
     const audioCtxRef = useRef<AudioContext | null>(null);
+    const instrumentRef = useRef<Soundfont.Player | null>(null);
     const nextNoteTimeRef = useRef(0);
     const currentMeasureRef = useRef(0);
     const currentNoteRef = useRef(0);
@@ -69,29 +73,16 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         const secondsPerBeat = 60.0 / bpm;
         const durationSec = beatValue * secondsPerBeat;
 
-        // Guitar Synth
+        // Guitar Sample Synth
         noteData.positions.forEach(pos => {
             if (pos.fret === 'x' || pos.fret === undefined) return;
             const fretNum = typeof pos.fret === 'string' ? parseInt(pos.fret, 10) : pos.fret;
             const midi = (STRING_MIDI_BASE[pos.str as keyof typeof STRING_MIDI_BASE] || 40) + fretNum;
-            const freq = 440 * Math.pow(2, (midi - 69) / 12);
             
-            const osc = audioCtxRef.current!.createOscillator();
-            const gain = audioCtxRef.current!.createGain();
-            
-            osc.type = 'triangle';
-            osc.frequency.value = freq;
-            
-            // Envelope
-            gain.gain.setValueAtTime(0, time);
-            gain.gain.linearRampToValueAtTime(0.5, time + 0.05);
-            gain.gain.exponentialRampToValueAtTime(0.001, time + durationSec - 0.01);
-            
-            osc.connect(gain);
-            gain.connect(audioCtxRef.current!.destination);
-            
-            osc.start(time);
-            osc.stop(time + durationSec);
+            if (instrumentRef.current) {
+                // Play realistic guitar sample
+                instrumentRef.current.play(midi, time, { duration: durationSec * 1.5, gain: 1.5 });
+            }
         });
 
         // Metronome Click Synth
@@ -139,21 +130,37 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         }
     };
 
+    const loadInstrumentAndPlay = async () => {
+        if (!audioCtxRef.current) {
+            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+            audioCtxRef.current = new AudioContext();
+        }
+        
+        if (audioCtxRef.current.state === 'suspended') {
+            await audioCtxRef.current.resume();
+        }
+
+        if (!instrumentRef.current) {
+            setIsLoading(true);
+            try {
+                // Load realistic steel acoustic guitar soundfont
+                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'acoustic_guitar_steel');
+            } catch (error) {
+                console.error("Failed to load soundfont", error);
+            }
+            setIsLoading(false);
+        }
+
+        // Start playback
+        currentMeasureRef.current = 0;
+        currentNoteRef.current = 0;
+        nextNoteTimeRef.current = audioCtxRef.current.currentTime + 0.1;
+        timerIDRef.current = requestAnimationFrame(scheduler);
+    };
+
     useEffect(() => {
         if (isPlaying) {
-            if (!audioCtxRef.current) {
-                const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-                audioCtxRef.current = new AudioContext();
-            }
-            if (audioCtxRef.current.state === 'suspended') {
-                audioCtxRef.current.resume();
-            }
-            
-            currentMeasureRef.current = 0;
-            currentNoteRef.current = 0;
-            nextNoteTimeRef.current = audioCtxRef.current.currentTime + 0.1;
-            
-            timerIDRef.current = requestAnimationFrame(scheduler);
+            loadInstrumentAndPlay();
         } else {
             if (timerIDRef.current !== null) {
                 cancelAnimationFrame(timerIDRef.current);
@@ -180,11 +187,18 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
             <div className="flex items-center gap-4">
                 <button 
                     onClick={handlePlayStop}
-                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all ${
+                    disabled={isLoading}
+                    className={`flex items-center justify-center w-12 h-12 rounded-full transition-all disabled:opacity-50 ${
                         isPlaying ? 'bg-rose-500/20 text-rose-400 hover:bg-rose-500/30 border border-rose-500/50' : 'bg-primary text-black hover:bg-primary/90 shadow-[0_0_15px_rgba(56,189,248,0.4)]'
                     }`}
                 >
-                    {isPlaying ? <Square className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-1" />}
+                    {isLoading ? (
+                        <div className="w-5 h-5 border-2 border-black border-t-transparent rounded-full animate-spin"></div>
+                    ) : isPlaying ? (
+                        <Square className="w-5 h-5 fill-current" />
+                    ) : (
+                        <Play className="w-5 h-5 fill-current ml-1" />
+                    )}
                 </button>
 
                 <div className="flex flex-col">
@@ -205,7 +219,10 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
 
             {/* Rhythm Counting */}
             <div className="flex-1 bg-black/30 p-3 rounded-lg border border-white/5 overflow-x-auto">
-                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2 font-semibold">Rhythm Count</p>
+                <p className="text-xs text-slate-400 uppercase tracking-wider mb-2 font-semibold flex items-center gap-2">
+                    Rhythm Count
+                    {isLoading && <span className="text-[10px] text-primary bg-primary/20 px-2 py-0.5 rounded-full">Downloading Samples...</span>}
+                </p>
                 <p className="text-primary font-mono text-sm whitespace-nowrap">
                     {generateCounting()}
                 </p>
