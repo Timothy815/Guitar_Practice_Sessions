@@ -188,7 +188,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
     return (
         <div className="flex flex-col gap-8 animate-in fade-in duration-500">
             {/* Header / Options */}
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/5 border border-white/10 rounded-2xl p-6">
+            <div className="print:hidden flex flex-col md:flex-row justify-between items-start md:items-center gap-6 bg-white/5 border border-white/10 rounded-2xl p-6">
                 <div>
                     <h2 className="text-2xl font-bold text-white mb-2">Chord Progression Sandbox</h2>
                     <p className="text-slate-400">Build and practice custom progressions in <span className="text-primary font-bold">{keyName} {quality} ({family})</span></p>
@@ -202,9 +202,9 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             </div>
 
             {/* Chord Palette */}
-            <div className="bg-black/20 border border-white/5 p-6 rounded-2xl">
+            <div className="print:hidden bg-black/20 border border-white/5 p-6 rounded-2xl">
                 <h3 className="text-primary font-bold uppercase tracking-wider text-sm mb-6">Diatonic Chords (Click to Play/Add)</h3>
-                <div className="flex overflow-x-auto gap-4 pb-4 snap-x">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
                     {chords.map((chord, idx) => (
                         <div 
                             key={idx}
@@ -212,7 +212,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 playChordOnce(chord);
                                 setProgression([...progression, chord]);
                             }}
-                            className="flex-shrink-0 bg-white/5 hover:bg-primary/20 hover:border-primary/50 border border-white/10 rounded-xl p-4 cursor-pointer transition-all min-w-[120px] snap-center group"
+                            className="bg-white/5 hover:bg-primary/20 hover:border-primary/50 border border-white/10 rounded-xl p-4 cursor-pointer transition-all group"
                         >
                             <div className="text-center mb-4">
                                 <p className="text-xl font-bold text-white group-hover:text-primary transition-colors">{chord.name}</p>
@@ -227,7 +227,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             </div>
 
             {/* Progression Timeline */}
-            <div className="bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 p-6 rounded-2xl min-h-[250px] flex flex-col">
+            <div className="print:hidden bg-gradient-to-br from-indigo-900/20 to-purple-900/20 border border-indigo-500/20 p-6 rounded-2xl min-h-[250px] flex flex-col">
                 <div className="flex justify-between items-center mb-6">
                     <h3 className="text-indigo-400 font-bold uppercase tracking-wider text-sm">Your Progression</h3>
                     
@@ -295,6 +295,25 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 >
                                     <Trash2 className="w-4 h-4" />
                                 </button>
+                            </div>
+                        ))}
+                    </div>
+                )}
+            </div>
+            {/* Print View for Progression */}
+            <div className="hidden print:block mt-12 bg-white">
+                <h2 className="text-3xl font-bold text-black border-b-2 border-black pb-4 mb-8">Custom Progression</h2>
+                {progression.length === 0 ? (
+                    <p className="text-gray-500 italic">No chords added to progression yet.</p>
+                ) : (
+                    <div className="grid grid-cols-4 gap-6">
+                        {progression.map((chord, idx) => (
+                            <div key={idx} className="border-2 border-gray-300 p-4 rounded-xl flex flex-col items-center justify-center break-inside-avoid">
+                                <p className="text-2xl font-bold text-black mb-1">{chord.name}</p>
+                                <p className="text-lg text-gray-600 font-mono mb-4">{chord.numeral}</p>
+                                <div className="transform scale-90">
+                                    <ChordDiagram chord={{...chord, name: ''}} />
+                                </div>
                             </div>
                         ))}
                     </div>
