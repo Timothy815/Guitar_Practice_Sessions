@@ -171,6 +171,17 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
 
     // (Omitted unchanged code replaced above)
 
+    function getChordPitchClasses(frets: (number | 'x')[]): Set<number> {
+        const STRING_PITCHES = [4, 9, 2, 7, 11, 4]; // E, A, D, G, B, E in chromatic indices (0=C, 1=C#, etc)
+        const pitches = new Set<number>();
+        frets.forEach((f, i) => {
+            if (f !== 'x') {
+                pitches.add((STRING_PITCHES[i] + (f as number)) % 12);
+            }
+        });
+        return pitches;
+    }
+
     const handleImportMIDI = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
@@ -178,6 +189,13 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         try {
             const arrayBuffer = await file.arrayBuffer();
             const midi = new Midi(arrayBuffer);
+            
+            // Extract BPM if available
+            let importedBpm = bpm;
+            if (midi.header && midi.header.tempos.length > 0) {
+                importedBpm = Math.round(midi.header.tempos[0].bpm);
+                setBpm(importedBpm);
+            }
             
             let maxNotes = 0;
             let mainTrack = midi.tracks[0];
@@ -189,24 +207,86 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             });
 
             if (mainTrack && mainTrack.notes.length > 0) {
+                // Group notes by time (within 50ms) to detect chords
+                const events: { time: number, duration: number, pitchClasses: Set<number> }[] = [];
+                
+                mainTrack.notes.forEach(note => {
+                    const pc = note.midi % 12;
+                    let added = false;
+                    for (let i = events.length - 1; i >= 0; i--) {
+                        if (Math.abs(events[i].time - note.time) < 0.05) {
+                            events[i].pitchClasses.add(pc);
+                            events[i].duration = Math.max(events[i].duration, note.duration);
+                            added = true;
+                            break;
+                        }
+                    }
+                    if (!added) {
+                        events.push({ time: note.time, duration: note.duration, pitchClasses: new Set([pc]) });
+                    }
+                });
+
+                events.sort((a, b) => a.time - b.time);
+
+                const diatonicChords = getAllDiatonicChords(keyName, quality, family);
+                const chordMatchCache = diatonicChords.map(c => ({
+                    chord: c,
+                    pitchClasses: getChordPitchClasses(c.frets)
+                }));
+
+                const newProgression: any[] = [];
                 const newRhythm: number[] = [];
                 let lastTime = 0;
-                mainTrack.notes.forEach(note => {
-                    const restDur = note.time - lastTime;
+                let matchesFound = 0;
+
+                events.forEach(ev => {
+                    const restDur = ev.time - lastTime;
                     if (restDur > 0.05) {
                         newRhythm.push(-restDur); // rest
                     }
-                    newRhythm.push(note.duration); // sounding
-                    lastTime = note.time + note.duration;
+                    newRhythm.push(ev.duration); // sounding
+                    lastTime = ev.time + ev.duration;
+
+                    let bestMatch = null;
+                    let bestScore = -1;
+
+                    for (const { chord, pitchClasses } of chordMatchCache) {
+                        let match = true;
+                        ev.pitchClasses.forEach(pc => {
+                            if (!pitchClasses.has(pc)) match = false;
+                        });
+                        if (match) {
+                            const score = ev.pitchClasses.size / pitchClasses.size;
+                            if (score > bestScore) {
+                                bestScore = score;
+                                bestMatch = chord;
+                            }
+                        }
+                    }
+                    
+                    if (bestMatch) {
+                        newProgression.push(bestMatch);
+                        matchesFound++;
+                    }
                 });
                 
                 if (newRhythm.length > 0) {
                     setCustomRhythm(newRhythm);
                     setStyle('custom');
+                    
+                    if (matchesFound > 0) {
+                        setProgression(newProgression);
+                        alert(`Successfully imported rhythm track with ${mainTrack.notes.length} notes at ${importedBpm} BPM, and mapped ${matchesFound} chord(s) to the progression!`);
+                    } else {
+                        alert(`Successfully imported rhythm track with ${mainTrack.notes.length} notes at ${importedBpm} BPM. (No matching chords found in the key of ${keyName} ${quality})`);
+                    }
                 }
+            } else {
+                alert("No notes found in the MIDI file.");
             }
         } catch (err) {
             console.error("Failed to parse MIDI file:", err);
+            alert("Failed to parse MIDI file. Ensure it is a valid .mid file.");
         }
     };
 
