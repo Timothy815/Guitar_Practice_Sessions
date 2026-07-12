@@ -361,6 +361,7 @@ export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQua
         ...shape,
         key,
         quality,
+        family,
         name: `${quality} ${family} - ${shape.name}`,
         baseFret,
         actualFrets,

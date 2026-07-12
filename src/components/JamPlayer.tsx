@@ -37,6 +37,26 @@ const MINOR_PROGRESSIONS: ProgDef[] = [
     { id: "min_moody", name: "Moody Vamp (i - v - VI - v)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'v', offset: 7, q: 'Minor' }, { numeral: 'VI', offset: 8, q: 'Major' }, { numeral: 'v', offset: 7, q: 'Minor' }] }
 ];
 
+const MAJOR_BLUES_PROGRESSIONS: ProgDef[] = [
+    { id: "maj_blues_12", name: "12-Bar Blues (I-IV-V)", chords: [
+        { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' },
+        { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' },
+        { numeral: 'V', offset: 7, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }
+    ]},
+    { id: "maj_blues_shuffle", name: "Texas Shuffle (I-IV-I-V)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }] },
+    { id: "maj_blues_gospel", name: "Gospel Blues (I-vi-ii-V)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'vi', offset: 9, q: 'Minor' }, { numeral: 'ii', offset: 2, q: 'Minor' }, { numeral: 'V', offset: 7, q: 'Major' }] }
+];
+
+const MINOR_BLUES_PROGRESSIONS: ProgDef[] = [
+    { id: "min_blues_12", name: "Minor 12-Bar Blues", chords: [
+        { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' },
+        { numeral: 'iv', offset: 5, q: 'Minor' }, { numeral: 'iv', offset: 5, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' },
+        { numeral: 'VI', offset: 8, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'V', offset: 7, q: 'Major' }
+    ]},
+    { id: "min_blues_quick", name: "Minor Quick Change (i-iv-i-V)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'iv', offset: 5, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'V', offset: 7, q: 'Major' }] },
+    { id: "min_blues_slow", name: "Slow Minor Blues (i-VI-V-i)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'VI', offset: 8, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }, { numeral: 'i', offset: 0, q: 'Minor' }] }
+];
+
 function getNoteByOffset(root: string, semitones: number) {
     const idx = CHROMATIC.indexOf(root);
     return CHROMATIC[(idx + semitones) % 12];
@@ -71,7 +91,10 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
     const currentNoteRef = useRef(0);
     const timerIDRef = useRef<number | null>(null);
     
-    const availableProgressions = shapeData.quality === 'Major' ? MAJOR_PROGRESSIONS : MINOR_PROGRESSIONS;
+    let availableProgressions = shapeData.quality === 'Major' ? MAJOR_PROGRESSIONS : MINOR_PROGRESSIONS;
+    if (shapeData.family === 'Blues') {
+        availableProgressions = shapeData.quality === 'Major' ? MAJOR_BLUES_PROGRESSIONS : MINOR_BLUES_PROGRESSIONS;
+    }
 
     const generateMeasures = () => {
         const measures: { midiNotes: number[], duration: string, velocity?: number }[][] = [];
@@ -138,6 +161,17 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                     { midiNotes: [], duration: "q", velocity: 0 },
                     { midiNotes, duration: "q", velocity: 0.9 }
                 ]);
+            } else if (style === 'shuffle') {
+                measures.push([
+                    { midiNotes, duration: "qt", velocity: 1.0 },
+                    { midiNotes, duration: "8t", velocity: 0.7 },
+                    { midiNotes, duration: "qt", velocity: 0.9 },
+                    { midiNotes, duration: "8t", velocity: 0.7 },
+                    { midiNotes, duration: "qt", velocity: 1.0 },
+                    { midiNotes, duration: "8t", velocity: 0.7 },
+                    { midiNotes, duration: "qt", velocity: 0.9 },
+                    { midiNotes, duration: "8t", velocity: 0.7 }
+                ]);
             }
         });
         
@@ -156,6 +190,8 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         if (durationStr === '16') beatValue = 0.25;
         if (durationStr === 'h') beatValue = 2;
         if (durationStr === 'w') beatValue = 4;
+        if (durationStr === 'qt') beatValue = 2 / 3;
+        if (durationStr === '8t') beatValue = 1 / 3;
         
         const secondsPerBeat = 60.0 / bpm;
         const durationSec = beatValue * secondsPerBeat;
@@ -355,6 +391,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         <option value="folk">Acoustic Strum (D D-U D D-U)</option>
                         <option value="quarters">Driving Quarters (D D D D)</option>
                         <option value="upbeats">Reggae / Upbeats</option>
+                        <option value="shuffle">Blues Shuffle</option>
                     </select>
                 </div>
             </div>
