@@ -1,4 +1,4 @@
-export type ScaleFamily = 'Pentatonic' | 'Blues' | 'Diatonic';
+export type ScaleFamily = 'Pentatonic' | 'Blues' | 'Diatonic' | 'Harmonic Minor';
 export type ScaleQuality = 'Minor' | 'Major';
 
 export const KEY_OFFSETS: Record<string, number> = {
@@ -327,6 +327,40 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
     }
 ];
 
+const TUNING = { 6: 0, 5: 5, 4: 10, 3: 3, 2: 7, 1: 0 } as const;
+
+export const HARMONIC_MINOR: ScaleShape[] = MINOR_DIATONIC.map(shape => {
+    const newShape = { ...shape, relativeFrets: JSON.parse(JSON.stringify(shape.relativeFrets)) as Record<number, number[]> };
+    newShape.name = newShape.name.replace("Aeolian Mode", "Harmonic Minor");
+    newShape.description = newShape.description.replace("Standard Aeolian Mode", "Harmonic Minor (raised 7th)");
+
+    const rootPos = shape.rootPositions[0];
+    const rootFret = shape.relativeFrets[rootPos.str][rootPos.fretIdx];
+    const rootPitch = (TUNING[rootPos.str as keyof typeof TUNING] + rootFret) % 12;
+
+    for (let str = 1; str <= 6; str++) {
+        for (let i = 0; i < newShape.relativeFrets[str].length; i++) {
+            const fret = newShape.relativeFrets[str][i];
+            const pitch = (TUNING[str as keyof typeof TUNING] + fret) % 12;
+            const interval = (pitch - rootPitch + 12) % 12;
+            // The minor 7th is 10 semitones above the root. Raise it to 11 (Major 7th).
+            if (interval === 10) {
+                newShape.relativeFrets[str][i] = fret + 1;
+            }
+        }
+    }
+    
+    // Convert 'v' to 'V' in chords to reflect harmonic minor
+    newShape.chords = newShape.chords.map(c => {
+        if (c.numeral === 'v' && c.quality === 'm') {
+            return { ...c, numeral: 'V', quality: '' };
+        }
+        return c;
+    });
+
+    return newShape;
+});
+
 export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQuality, shapeId: number) {
     const keyOffset = KEY_OFFSETS[key] ?? 5; // Default A
     
@@ -336,6 +370,7 @@ export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQua
     if (family === 'Blues' && quality === 'Major') shapeDefinition = MAJOR_BLUES;
     if (family === 'Diatonic' && quality === 'Minor') shapeDefinition = MINOR_DIATONIC;
     if (family === 'Diatonic' && quality === 'Major') shapeDefinition = MAJOR_DIATONIC;
+    if (family === 'Harmonic Minor') shapeDefinition = HARMONIC_MINOR;
     
     const shape = shapeDefinition[shapeId - 1];
     

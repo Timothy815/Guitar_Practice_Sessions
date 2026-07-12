@@ -128,6 +128,20 @@ export const techniques: Record<string, Technique> = {
             "Losing time and rhythm while trying to execute a technique.",
             "Tensing up the picking hand."
         ]
+    },
+    "Speed": { 
+        name: "Speed & Metronome", 
+        desc: "Build speed by playing the same pattern with a gradually increasing tempo.",
+        howTo: [
+            "Start with a tempo where you can play the pattern flawlessly.",
+            "Increase the BPM by 5-10 after every successful repetition.",
+            "Focus on economy of motion (keep your fingers close to the fretboard)."
+        ],
+        whatToWatchFor: [
+            "Tensing up your picking hand as you get faster.",
+            "Sacrificing clean notes for speed.",
+            "Flying fingers (lifting fingers too high off the fretboard)."
+        ]
     }
 };
 
@@ -137,8 +151,9 @@ const DAY_TO_SHAPE: Record<string, number> = {
     "Wednesday": 3,
     "Thursday": 4,
     "Friday": 5,
-    "Saturday": 1,
-    "Sunday": 2
+    "Saturday": 1, // Double stops
+    "Sunday": 2, // Improvisation focus
+    "Speed": 1 // Speed Building defaults to shape 1
 };
 
 // Helper to chunk notes into measures of 8 eighth notes
@@ -269,7 +284,6 @@ function generateTechniqueMeasures(dayOfWeek: string, notesAsc: {str: number, fr
                 ]
             ];
         case "Sunday":
-        default:
             return [
                 [
                     { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "8" },
@@ -278,6 +292,22 @@ function generateTechniqueMeasures(dayOfWeek: string, notesAsc: {str: number, fr
                     { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "h" }  // Vibrato
                 ]
             ];
+        case "Speed":
+            return [
+                [
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "16" },
+                    { positions: [{ str: s3_n2.str, fret: s3_n2.fret }], duration: "16" },
+                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "16" },
+                    { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "16" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "16" },
+                    { positions: [{ str: s3_n2.str, fret: s3_n2.fret }], duration: "16" },
+                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "16" },
+                    { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "16" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "h" }
+                ]
+            ];
+        default:
+            return chunkIntoMeasures(notesAsc.slice(0, 8), 4);
     }
 }
 
