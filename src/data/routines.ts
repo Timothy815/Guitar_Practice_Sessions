@@ -281,8 +281,8 @@ function generateTechniqueMeasures(dayOfWeek: string, notesAsc: {str: number, fr
     }
 }
 
-export function generateRoutine(key: string, family: ScaleFamily, quality: ScaleQuality, dayOfWeek: string): { routine: Exercise[], shapeData: any } {
-    const shapeId = DAY_TO_SHAPE[dayOfWeek] || 1;
+export function generateRoutine(key: string, family: ScaleFamily, quality: ScaleQuality, dayOfWeek: string, overrideShapeId?: number): { routine: Exercise[], shapeData: any } {
+    const shapeId = overrideShapeId ?? (DAY_TO_SHAPE[dayOfWeek] || 1);
     const shape = getScaleData(key, family, quality, shapeId);
     
     const f = shape.actualFrets;
