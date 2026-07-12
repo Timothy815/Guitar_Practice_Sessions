@@ -447,7 +447,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                             <option value="waltz">Waltz (3/4)</option>
                             <option value="arpeggio">Arpeggio (8ths)</option>
                             <option value="funk">Funk (16ths)</option>
-                            <option value="custom">Custom Tapped</option>
+                            <option value="custom">Custom</option>
                         </select>
                         
                         {style === 'custom' && (
