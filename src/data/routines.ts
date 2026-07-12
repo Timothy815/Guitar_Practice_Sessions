@@ -197,6 +197,109 @@ function generateChordProgressionMeasures(shapeData: any): TabNoteData[][] {
     return measures;
 }
 
+function quantizeRhythm(activeRhythmStr: string | null): string[] | null {
+    if (!activeRhythmStr) return null;
+    try {
+        const data = JSON.parse(activeRhythmStr);
+        if (!data.rhythm || !data.bpm) return null;
+        
+        const secondsPerBeat = 60.0 / data.bpm;
+        const quantized: string[] = [];
+        
+        data.rhythm.forEach((rVal: number) => {
+            const absoluteSeconds = Math.abs(rVal);
+            const isRest = rVal < 0;
+            const beats = absoluteSeconds / secondsPerBeat;
+            
+            let dur = '16';
+            if (beats >= 3.0) dur = 'w';
+            else if (beats >= 1.5) dur = 'h';
+            else if (beats >= 0.75) dur = 'q';
+            else if (beats >= 0.375) dur = '8';
+            else dur = '16';
+            
+            if (isRest) dur += 'r';
+            
+            quantized.push(dur);
+        });
+        
+        return quantized.length > 0 ? quantized : null;
+    } catch (e) {
+        return null;
+    }
+}
+
+function buildCustomMelodicMeasures(lickNotes: any[], durations: string[]): TabNoteData[][] {
+    const measures: TabNoteData[][] = [];
+    let currentMeasure: TabNoteData[] = [];
+    let currentChordIdx = 0;
+    
+    durations.forEach((dur) => {
+        const isRest = dur.endsWith('r');
+        const baseDur = dur.replace('r', '');
+        const targetNote = lickNotes[currentChordIdx % lickNotes.length];
+        
+        // For rests, we draw an 'X' (muted) on the same string to represent silence in tab
+        const pos = isRest ? [{ str: targetNote.str, fret: 'X' }] : [{ str: targetNote.str, fret: targetNote.fret }];
+        
+        currentMeasure.push({ positions: pos, duration: baseDur });
+        
+        if (!isRest) {
+            currentChordIdx++;
+        }
+        
+        if (currentMeasure.length === 4) {
+            measures.push(currentMeasure);
+            currentMeasure = [];
+        }
+    });
+    
+    if (currentMeasure.length > 0) {
+        measures.push(currentMeasure);
+    }
+    
+    return measures;
+}
+
+function buildCustomHarmonicMeasures(shapeData: any, durations: string[]): TabNoteData[][] {
+    const measures: TabNoteData[][] = [];
+    if (!shapeData.actualChords || shapeData.actualChords.length === 0) return measures;
+    
+    let currentMeasure: TabNoteData[] = [];
+    let currentChordIdx = 0;
+    
+    durations.forEach((dur) => {
+        const isRest = dur.endsWith('r');
+        const baseDur = dur.replace('r', '');
+        const chord = shapeData.actualChords[currentChordIdx % shapeData.actualChords.length];
+        
+        const positions: {str: number, fret: number|string}[] = [];
+        for (let strIdx = 0; strIdx < 6; strIdx++) {
+            const fretVal = chord.frets[strIdx];
+            if (fretVal !== 'x') {
+                positions.push({ str: 6 - strIdx, fret: isRest ? 'X' : fretVal });
+            }
+        }
+        
+        currentMeasure.push({ positions, duration: baseDur });
+        
+        if (!isRest) {
+            currentChordIdx++;
+        }
+        
+        if (currentMeasure.length === 4) {
+            measures.push(currentMeasure);
+            currentMeasure = [];
+        }
+    });
+    
+    if (currentMeasure.length > 0) {
+        measures.push(currentMeasure);
+    }
+    
+    return measures;
+}
+
 // Helper to generate dynamic, tailored exercises for the Technique of the Day
 function generateTechniqueMeasures(dayOfWeek: string, notesAsc: {str: number, fret: number}[]): TabNoteData[][] {
     // Grab notes on strings 2 and 3 for expressive techniques
@@ -340,6 +443,9 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
     // If for some reason we don't have enough, fallback
     const lickNotes = middleNotes.length === 3 ? middleNotes : allNotesDesc.slice(0, 3);
 
+    const activeRhythmStr = typeof localStorage !== 'undefined' ? localStorage.getItem('fretfocus_active_rhythm') : null;
+    const quantizedDurations = quantizeRhythm(activeRhythmStr);
+
     const routine: Exercise[] = [
         {
             id: "warmup",
@@ -393,13 +499,16 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             id: "melodic-rhythm",
             title: "4. Melodic rhythm",
             duration: 300,
-            description: "Rhythm transforms scales into music. Play a simple 3-note melodic lick inside this shape, first as slow quarter notes, then double time as eighth notes.",
-            focusPoints: [
+            description: quantizedDurations ? "Playing your custom recorded rhythm applied to a melodic lick in this position." : "Rhythm transforms scales into music. Play a simple 3-note melodic lick inside this shape, first as slow quarter notes, then double time as eighth notes.",
+            focusPoints: quantizedDurations ? [
+                "Follow the sheet music to match the rhythm you tapped",
+                "Muted notes (X) represent the rests in your tapped rhythm"
+            ] : [
                 "Use a metronome if possible",
                 "Feel the space between the quarter notes",
                 "Keep the phrasing confident when switching to 8th notes"
             ],
-            vexflowMeasures: [
+            vexflowMeasures: quantizedDurations ? buildCustomMelodicMeasures(lickNotes, quantizedDurations) : [
                 [
                     { positions: [{ str: lickNotes[0].str, fret: lickNotes[0].fret }], duration: "q" },
                     { positions: [{ str: lickNotes[1].str, fret: lickNotes[1].fret }], duration: "q" },
@@ -418,13 +527,16 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             id: "harmonic-rhythm",
             title: "5. Harmonic rhythm",
             duration: 300,
-            description: `Practice the harmonic structure of this position. Strum the chords of the progression (${shape.chordProgressions}) to internalize the tonality of the shape.`,
-            focusPoints: [
+            description: quantizedDurations ? "Practicing your custom recorded rhythm applied to the diatonic chords of this position." : `Practice the harmonic structure of this position. Strum the chords of the progression (${shape.chordProgressions}) to internalize the tonality of the shape.`,
+            focusPoints: quantizedDurations ? [
+                "Follow the sheet music to match the rhythm you tapped",
+                "Muted notes (X) represent the rests in your tapped rhythm"
+            ] : [
                 "Ensure all notes in the chord ring out clearly.",
                 "Practice a steady rhythm: one long strum followed by two short strums.",
                 "Keep your hand moving consistently."
             ],
-            vexflowMeasures: generateChordProgressionMeasures(shape)
+            vexflowMeasures: quantizedDurations ? buildCustomHarmonicMeasures(shape, quantizedDurations) : generateChordProgressionMeasures(shape)
         },
         {
             id: "technique",

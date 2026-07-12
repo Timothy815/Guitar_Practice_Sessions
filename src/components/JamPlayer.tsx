@@ -91,13 +91,20 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
     const currentNoteRef = useRef(0);
     const timerIDRef = useRef<number | null>(null);
     
+    const [customJams, setCustomJams] = useState<any[]>([]);
+
+    useEffect(() => {
+        const saved = JSON.parse(localStorage.getItem('fretfocus_custom_jams') || '[]');
+        setCustomJams(saved);
+    }, []);
+
     let availableProgressions = shapeData.quality === 'Major' ? MAJOR_PROGRESSIONS : MINOR_PROGRESSIONS;
     if (shapeData.family === 'Blues') {
         availableProgressions = shapeData.quality === 'Major' ? MAJOR_BLUES_PROGRESSIONS : MINOR_BLUES_PROGRESSIONS;
     }
 
     const generateMeasures = () => {
-        const measures: { midiNotes: number[], duration: string, velocity?: number }[][] = [];
+        const measures: { midiNotes: number[], duration: string, velocity?: number, absoluteBeatValue?: number, isRest?: boolean }[][] = [];
         
         let chordMidiArrays: number[][] = [];
         
@@ -125,6 +132,15 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
             } else if (chordMidiArrays.length === 3) {
                 chordMidiArrays.push(chordMidiArrays[0]);
             }
+        } else if (progId.startsWith('custom_jam_')) {
+            const customJam = customJams.find(j => j.id === progId);
+            if (customJam) {
+                const keyRoot = shapeData.key;
+                chordMidiArrays = customJam.chords.map((c: any) => {
+                    const chordRoot = getNoteByOffset(keyRoot, c.offset);
+                    return getChordMidi(chordRoot, c.q);
+                });
+            }
         } else {
             // Build progression dynamically based on Key and Quality
             const prog = availableProgressions.find(p => p.id === progId);
@@ -135,6 +151,35 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 const chordRoot = getNoteByOffset(keyRoot, c.offset);
                 return getChordMidi(chordRoot, c.q);
             });
+        }
+
+        const customJam = customJams.find(j => j.id === progId);
+        
+        if (style === 'custom' && customJam && customJam.rhythm) {
+            // Build custom rhythm measure
+            const measure: any[] = [];
+            const originalBpm = customJam.bpm || 90;
+            let currentChordIdx = 0;
+            
+            customJam.rhythm.forEach((rVal: number) => {
+                const absoluteSeconds = Math.abs(rVal);
+                const originalBeats = absoluteSeconds / (60.0 / originalBpm);
+                const isRest = rVal < 0;
+                
+                measure.push({
+                    midiNotes: isRest ? [] : chordMidiArrays[currentChordIdx % chordMidiArrays.length],
+                    duration: 'custom',
+                    velocity: isRest ? 0 : 1.0,
+                    absoluteBeatValue: originalBeats,
+                    isRest: isRest
+                });
+                
+                if (!isRest) {
+                    currentChordIdx++;
+                }
+            });
+            measures.push(measure);
+            return measures;
         }
 
         chordMidiArrays.forEach(midiNotes => {
@@ -184,19 +229,28 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         if (!audioCtxRef.current) return 0;
         
         const noteData = measures[measureIdx][noteIdx];
-        const durationStr = noteData.duration || 'q';
-        let beatValue = 1;
-        if (durationStr === '8') beatValue = 0.5;
-        if (durationStr === '16') beatValue = 0.25;
-        if (durationStr === 'h') beatValue = 2;
-        if (durationStr === 'w') beatValue = 4;
-        if (durationStr === 'qt') beatValue = 2 / 3;
-        if (durationStr === '8t') beatValue = 1 / 3;
         
-        const secondsPerBeat = 60.0 / bpm;
-        const durationSec = beatValue * secondsPerBeat;
+        let durationSec = 0;
+        let beatValue = 1;
+        
+        if (noteData.absoluteBeatValue !== undefined) {
+            const secondsPerBeat = 60.0 / bpm;
+            durationSec = noteData.absoluteBeatValue * secondsPerBeat;
+            beatValue = noteData.absoluteBeatValue;
+        } else {
+            const durationStr = noteData.duration || 'q';
+            if (durationStr === '8') beatValue = 0.5;
+            if (durationStr === '16') beatValue = 0.25;
+            if (durationStr === 'h') beatValue = 2;
+            if (durationStr === 'w') beatValue = 4;
+            if (durationStr === 'qt') beatValue = 2 / 3;
+            if (durationStr === '8t') beatValue = 1 / 3;
+            
+            const secondsPerBeat = 60.0 / bpm;
+            durationSec = beatValue * secondsPerBeat;
+        }
 
-        if (noteData.midiNotes && noteData.midiNotes.length > 0) {
+        if (noteData.midiNotes && noteData.midiNotes.length > 0 && !noteData.isRest) {
             const isUpstroke = noteData.velocity && noteData.velocity < 0.8;
             
             // Strum direction based on velocity
@@ -357,6 +411,11 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         value={progId}
                         onChange={(e) => {
                             setProgId(e.target.value);
+                            const jam = customJams.find(j => j.id === e.target.value);
+                            if (jam && jam.style === 'custom') {
+                                setStyle('custom');
+                                setBpm(jam.bpm);
+                            }
                             if (isPlaying) {
                                 setIsPlaying(false);
                                 setTimeout(() => setIsPlaying(true), 50);
@@ -365,6 +424,13 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         className="bg-black/40 border border-indigo-500/30 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-indigo-400 transition-colors cursor-pointer w-full"
                     >
                         <option value="shape">Current Shape ({shapeData.chordProgressions})</option>
+                        {customJams.length > 0 && (
+                            <optgroup label="My Saved Tracks">
+                                {customJams.map(p => (
+                                    <option key={p.id} value={p.id}>{p.name}</option>
+                                ))}
+                            </optgroup>
+                        )}
                         <optgroup label={`Key of ${shapeData.key} ${shapeData.quality}`}>
                             {availableProgressions.map(p => (
                                 <option key={p.id} value={p.id}>{p.name}</option>
@@ -392,6 +458,9 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         <option value="quarters">Driving Quarters (D D D D)</option>
                         <option value="upbeats">Reggae / Upbeats</option>
                         <option value="shuffle">Blues Shuffle</option>
+                        {progId.startsWith('custom_jam_') && (
+                            <option value="custom">Original Tap Rhythm</option>
+                        )}
                     </select>
                 </div>
             </div>
