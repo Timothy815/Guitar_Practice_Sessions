@@ -3,6 +3,7 @@ import { techniques, type Exercise } from '../data/routines';
 import VexFlowTab from './VexFlowTab';
 import Fretboard from './Fretboard';
 import ChordDiagram from './ChordDiagram';
+import RhythmPlayer from './RhythmPlayer';
 import { Play, Pause, ChevronRight, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
 interface ExercisePlayerProps {
@@ -127,7 +128,10 @@ export default function ExercisePlayer({
                         <p className="text-slate-400 italic text-lg bg-white/5 p-4 rounded-lg border border-white/10">{exercise.description}</p>
                         
                         {exercise.vexflowMeasures && (
-                            <VexFlowTab measures={exercise.vexflowMeasures} />
+                            <>
+                                <RhythmPlayer measures={exercise.vexflowMeasures} />
+                                <VexFlowTab measures={exercise.vexflowMeasures} />
+                            </>
                         )}
                     </div>
                 ) : (
@@ -154,7 +158,10 @@ export default function ExercisePlayer({
                         )}
 
                         {exercise.vexflowMeasures && (
-                            <VexFlowTab measures={exercise.vexflowMeasures} />
+                            <>
+                                <RhythmPlayer measures={exercise.vexflowMeasures} />
+                                <VexFlowTab measures={exercise.vexflowMeasures} />
+                            </>
                         )}
                     </div>
                 )}
