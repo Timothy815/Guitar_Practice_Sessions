@@ -67,16 +67,28 @@ export default function Fretboard({ shapeData }: FretboardProps) {
 
                     {/* Draw Strings (horizontal lines) */}
                     {Array.from({ length: 6 }).map((_, i) => {
+                        const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
                         return (
-                            <line 
-                                key={`str-${i}`}
-                                x1={padding} 
-                                y1={padding + i * stringSpacing} 
-                                x2={width - padding} 
-                                y2={padding + i * stringSpacing} 
-                                stroke="#94a3b8" 
-                                strokeWidth={1 + (i * 0.5)} // Thicker strings for lower notes
-                            />
+                            <g key={`str-${i}`}>
+                                <text 
+                                    x={padding - 15} 
+                                    y={padding + i * stringSpacing + 5} 
+                                    textAnchor="middle" 
+                                    fill="#94a3b8" 
+                                    fontSize="14"
+                                    fontWeight="bold"
+                                >
+                                    {stringNames[i]}
+                                </text>
+                                <line 
+                                    x1={padding} 
+                                    y1={padding + i * stringSpacing} 
+                                    x2={width - padding} 
+                                    y2={padding + i * stringSpacing} 
+                                    stroke="#94a3b8" 
+                                    strokeWidth={1 + (i * 0.5)} // Thicker strings for lower notes
+                                />
+                            </g>
                         );
                     })}
 

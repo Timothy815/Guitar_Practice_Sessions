@@ -61,17 +61,31 @@ export default function ChordDiagram({ chord }: ChordDiagramProps) {
                 ))}
 
                 {/* Draw Strings (horizontal lines) */}
-                {Array.from({ length: 6 }).map((_, i) => (
-                    <line 
-                        key={`str-${i}`}
-                        x1={paddingX} 
-                        y1={paddingY + i * stringSpacing} 
-                        x2={width - paddingX} 
-                        y2={paddingY + i * stringSpacing} 
-                        stroke="#94a3b8" 
-                        strokeWidth={1 + (i * 0.2)} // Make lower strings slightly thicker
-                    />
-                ))}
+                {Array.from({ length: 6 }).map((_, i) => {
+                    const stringNames = ['e', 'B', 'G', 'D', 'A', 'E'];
+                    return (
+                        <g key={`str-${i}`}>
+                            <text 
+                                x={paddingX - 22} 
+                                y={paddingY + i * stringSpacing + 3} 
+                                textAnchor="middle" 
+                                fontSize="10" 
+                                fill="#94a3b8" 
+                                fontWeight="bold"
+                            >
+                                {stringNames[i]}
+                            </text>
+                            <line 
+                                x1={paddingX} 
+                                y1={paddingY + i * stringSpacing} 
+                                x2={width - paddingX} 
+                                y2={paddingY + i * stringSpacing} 
+                                stroke="#94a3b8" 
+                                strokeWidth={1 + (i * 0.2)} // Make lower strings slightly thicker
+                            />
+                        </g>
+                    );
+                })}
 
                 {/* Draw Barre if exists */}
                 {chord.barre !== undefined && chord.barre > 0 && (
