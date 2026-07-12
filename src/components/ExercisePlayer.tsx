@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { techniques, type Exercise } from '../data/routines';
 import VexFlowTab from './VexFlowTab';
-import { Play, Pause, ChevronRight, ChevronLeft } from 'lucide-react';
+import Fretboard from './Fretboard';
+import { Play, Pause, ChevronRight, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
 interface ExercisePlayerProps {
     exercise: Exercise;
     dayOfWeek: string;
+    shapeData: any;
     onNext: () => void;
     onPrev: () => void;
     isFirst: boolean;
@@ -15,6 +17,7 @@ interface ExercisePlayerProps {
 export default function ExercisePlayer({ 
     exercise, 
     dayOfWeek, 
+    shapeData,
     onNext, 
     onPrev, 
     isFirst, 
@@ -22,6 +25,7 @@ export default function ExercisePlayer({
 }: ExercisePlayerProps) {
     const [timeRemaining, setTimeRemaining] = useState(exercise.duration);
     const [isPlaying, setIsPlaying] = useState(false);
+    const [showDiagram, setShowDiagram] = useState(true);
 
     // Reset timer when exercise changes
     useEffect(() => {
@@ -53,7 +57,6 @@ export default function ExercisePlayer({
     };
 
     const toggleTimer = () => setIsPlaying(!isPlaying);
-
     const tech = techniques[dayOfWeek];
 
     return (
@@ -70,17 +73,56 @@ export default function ExercisePlayer({
 
             {/* Body */}
             <div className="flex-1 p-8 overflow-y-auto bg-gradient-to-b from-transparent to-black/10">
+                
+                {/* Global Shape & Chord Context */}
+                <div className="mb-8 border border-white/10 bg-white/5 rounded-xl p-4">
+                    <div className="flex justify-between items-center mb-4">
+                        <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                            <span className="w-2 h-6 bg-primary rounded-full inline-block"></span>
+                            {shapeData.name} Context
+                        </h3>
+                        <button 
+                            onClick={() => setShowDiagram(!showDiagram)}
+                            className="flex items-center gap-2 text-sm text-slate-300 hover:text-white bg-white/5 hover:bg-white/10 px-3 py-1.5 rounded-lg transition-colors"
+                        >
+                            {showDiagram ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                            {showDiagram ? "Hide Diagram" : "Show Diagram"}
+                        </button>
+                    </div>
+
+                    {showDiagram && (
+                        <div className="mb-6 animate-in fade-in duration-300">
+                            <Fretboard shapeData={shapeData} />
+                        </div>
+                    )}
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="bg-black/20 p-4 rounded-lg">
+                            <h4 className="text-primary font-semibold mb-1 text-sm uppercase tracking-wider">Relevant Chords</h4>
+                            <p className="text-slate-200">{shapeData.chordProgressions}</p>
+                        </div>
+                        <div className="bg-black/20 p-4 rounded-lg">
+                            <h4 className="text-primary font-semibold mb-1 text-sm uppercase tracking-wider">Voicing Approach</h4>
+                            <p className="text-slate-200">{shapeData.chordVoicingsDesc}</p>
+                        </div>
+                    </div>
+                </div>
+
                 {exercise.dynamic ? (
-                    <div className="space-y-6">
+                    <div className="space-y-6 mt-8">
                         <h3 className="text-2xl font-bold text-white tracking-wide flex items-center gap-3">
                             <span className="w-2 h-8 bg-primary rounded-full"></span>
                             Focus: {tech.name}
                         </h3>
                         <p className="text-xl text-slate-200 leading-relaxed max-w-3xl">{tech.desc}</p>
                         <p className="text-slate-400 italic text-lg bg-white/5 p-4 rounded-lg border border-white/10">{exercise.description}</p>
+                        
+                        {exercise.vexflowMeasures && (
+                            <VexFlowTab measures={exercise.vexflowMeasures} />
+                        )}
                     </div>
                 ) : (
-                    <div className="space-y-8">
+                    <div className="space-y-8 mt-8">
                         <p className="text-xl text-slate-100 leading-relaxed border-l-4 border-primary/70 pl-6 bg-gradient-to-r from-primary/10 to-transparent py-4 rounded-r-xl">
                             {exercise.description}
                         </p>

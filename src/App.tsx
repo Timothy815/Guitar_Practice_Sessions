@@ -2,7 +2,9 @@ import { useState, useEffect } from 'react';
 import Timeline from './components/Timeline';
 import ExercisePlayer from './components/ExercisePlayer';
 import VexFlowTab from './components/VexFlowTab';
-import { pentatonicRoutine, techniques } from './data/routines';
+import Fretboard from './components/Fretboard';
+import { generateRoutine, techniques } from './data/routines';
+import { KEY_OFFSETS } from './data/musicEngine';
 import { Guitar, Printer } from 'lucide-react';
 
 export default function App() {
@@ -19,6 +21,8 @@ export default function App() {
         window.print();
     };
 
+    const { routine: currentRoutine, shapeData } = generateRoutine(key, dayOfWeek);
+
     return (
         <div className="min-h-screen p-4 md:p-8 max-w-7xl mx-auto flex flex-col gap-8">
             {/* Header */}
@@ -30,20 +34,26 @@ export default function App() {
                     <h1 className="text-3xl font-extrabold tracking-tight">FretFocus</h1>
                 </div>
                 
-                <div className="flex items-center gap-4">
+                <div className="flex flex-wrap items-center justify-center gap-4">
                     <select 
                         value={key}
-                        onChange={(e) => setKey(e.target.value)}
+                        onChange={(e) => {
+                            setKey(e.target.value);
+                            setCurrentStepIndex(0);
+                        }}
                         className="bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors"
                     >
-                        <option value="Am" className="bg-slate-800">A Minor Pentatonic</option>
-                        <option value="Em" className="bg-slate-800">E Minor Pentatonic</option>
-                        <option value="Gm" className="bg-slate-800">G Minor Pentatonic</option>
+                        {Object.keys(KEY_OFFSETS).map(k => (
+                            <option key={k} value={k} className="bg-slate-800">{k} Pentatonic</option>
+                        ))}
                     </select>
                     
                     <select 
                         value={dayOfWeek}
-                        onChange={(e) => setDayOfWeek(e.target.value)}
+                        onChange={(e) => {
+                            setDayOfWeek(e.target.value);
+                            setCurrentStepIndex(0);
+                        }}
                         className="bg-white/5 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors"
                     >
                         {Object.keys(techniques).map(day => (
@@ -62,34 +72,46 @@ export default function App() {
 
             {/* Print Header */}
             <div className="print-only text-center border-b-2 border-black pb-4 mb-8">
-                <h1 className="text-3xl font-bold mb-2">Focused 30-Minute Pentatonic Routine</h1>
-                <p className="text-lg">Date: ______________ &nbsp;&nbsp;&nbsp; Key: {key}</p>
+                <h1 className="text-3xl font-bold mb-2">Focused Pentatonic Routine</h1>
+                <p className="text-lg">Key: {key} Minor &nbsp;&nbsp;&nbsp; Shape: {shapeData.name}</p>
                 <p className="text-lg mt-2">Daily Focus ({dayOfWeek}): {techniques[dayOfWeek].name}</p>
             </div>
 
             {/* Main Content Layout */}
             <main className="flex flex-col lg:flex-row gap-8 flex-1 no-print">
                 <Timeline 
-                    routines={pentatonicRoutine}
+                    routines={currentRoutine}
                     currentStepIndex={currentStepIndex}
                     onStepClick={setCurrentStepIndex}
                 />
                 
                 <div className="flex-1">
                     <ExercisePlayer 
-                        exercise={pentatonicRoutine[currentStepIndex]}
+                        exercise={currentRoutine[currentStepIndex]}
                         dayOfWeek={dayOfWeek}
+                        shapeData={shapeData}
                         onNext={() => setCurrentStepIndex(i => i + 1)}
                         onPrev={() => setCurrentStepIndex(i => i - 1)}
                         isFirst={currentStepIndex === 0}
-                        isLast={currentStepIndex === pentatonicRoutine.length - 1}
+                        isLast={currentStepIndex === currentRoutine.length - 1}
                     />
                 </div>
             </main>
 
             {/* Print Routine Full Render */}
             <div className="print-only space-y-8 mt-8">
-                {pentatonicRoutine.map((step, idx) => (
+                
+                {/* Print Fretboard Diagram */}
+                <div className="break-inside-avoid border border-gray-300 p-6 rounded-lg text-center">
+                    <h2 className="text-xl font-bold text-black mb-4">Shape Diagram</h2>
+                    <Fretboard shapeData={shapeData} />
+                    <div className="mt-4 text-left border-t border-gray-300 pt-4">
+                        <p className="font-bold text-black">Chord Connections:</p>
+                        <p className="text-black">{shapeData.chordProgressions} - {shapeData.chordVoicingsDesc}</p>
+                    </div>
+                </div>
+
+                {currentRoutine.map((step, idx) => (
                     <div key={idx} className="break-inside-avoid border border-gray-300 p-6 rounded-lg">
                         <h2 className="text-2xl font-bold mb-4 pb-2 border-b border-gray-300 text-black">{step.title} <span className="text-gray-500 font-normal text-lg">({Math.floor(step.duration / 60)} min)</span></h2>
                         {step.dynamic ? (
