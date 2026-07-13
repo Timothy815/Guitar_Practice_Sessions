@@ -1,15 +1,18 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Square, Settings2, Music } from 'lucide-react';
+import { Play, Square, Settings2, Music, Trash2 } from 'lucide-react';
 import Soundfont from 'soundfont-player';
 
 interface JamPlayerProps {
     shapeData: any;
 }
 
-const CHROMATIC = ['C', 'C#', 'D', 'Eb', 'E', 'F', 'F#', 'G', 'G#', 'A', 'Bb', 'B'];
+const CHROMATIC = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const FLAT_EQUIVALENTS: Record<string, string> = {
+    'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#'
+};
 const ROOT_MIDI = {
-    'E': 40, 'F': 41, 'F#': 42, 'G': 43, 'G#': 44, 'A': 45, 'Bb': 46, 'B': 47,
-    'C': 48, 'C#': 49, 'D': 50, 'Eb': 51
+    'E': 40, 'F': 41, 'F#': 42, 'Gb': 42, 'G': 43, 'G#': 44, 'Ab': 44, 'A': 45, 'A#': 46, 'Bb': 46, 'B': 47,
+    'C': 48, 'C#': 49, 'Db': 49, 'D': 50, 'D#': 51, 'Eb': 51
 };
 
 const STRING_MIDI_BASE = {
@@ -58,12 +61,20 @@ const MINOR_BLUES_PROGRESSIONS: ProgDef[] = [
 ];
 
 function getNoteByOffset(root: string, semitones: number) {
-    const idx = CHROMATIC.indexOf(root);
+    let normalizedRoot = FLAT_EQUIVALENTS[root] || root;
+    const idx = CHROMATIC.indexOf(normalizedRoot);
+    if (idx === -1) return root; // fallback
     return CHROMATIC[(idx + semitones) % 12];
 }
 
-function getChordMidi(rootName: string, quality: 'Major' | 'Minor'): number[] {
+function getChordMidi(rootName: string, quality: 'Major' | 'Minor' | 'Dim'): number[] {
     const base = ROOT_MIDI[rootName as keyof typeof ROOT_MIDI];
+    if (!base) return [];
+    
+    if (quality === 'Dim') {
+        return [base, base+3, base+6, base+12]; // Simple diminished voicing
+    }
+    
     if (base < 48) {
         // E-form barre voicing
         return quality === 'Major' 
@@ -360,6 +371,19 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         setIsPlaying(!isPlaying);
     };
 
+    const handleDeleteCustomJam = () => {
+        if (!progId.startsWith('custom_jam_')) return;
+        if (window.confirm("Are you sure you want to delete this custom jam track?")) {
+            const updatedJams = customJams.filter(j => j.id !== progId);
+            setCustomJams(updatedJams);
+            localStorage.setItem('fretfocus_custom_jams', JSON.stringify(updatedJams));
+            setProgId('shape');
+            if (isPlaying) {
+                setIsPlaying(false);
+            }
+        }
+    };
+
     return (
         <div className="bg-gradient-to-r from-indigo-900/40 to-slate-900/40 p-5 rounded-2xl border border-indigo-500/20 mb-6 flex flex-col xl:flex-row items-center gap-6 shadow-lg shadow-indigo-500/10 no-print">
             
@@ -403,10 +427,15 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
 
             <div className="flex flex-col md:flex-row gap-6 w-full xl:w-auto flex-1">
                 
-                <div className="flex flex-col flex-1">
-                    <label className="text-xs text-indigo-300 uppercase tracking-wider mb-1 font-bold flex items-center gap-2">
-                        <Music className="w-3 h-3" /> Chord Progression
-                    </label>
+                <div className="flex flex-col flex-1 relative">
+                    <div className="text-xs text-indigo-300 uppercase tracking-wider mb-1 font-bold flex items-center justify-between w-full">
+                        <span className="flex items-center gap-2"><Music className="w-3 h-3" /> Chord Progression</span>
+                        {progId.startsWith('custom_jam_') && (
+                            <button onClick={handleDeleteCustomJam} className="text-red-400 hover:text-red-300 transition-colors" title="Delete Custom Jam">
+                                <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                        )}
+                    </div>
                     <select 
                         value={progId}
                         onChange={(e) => {

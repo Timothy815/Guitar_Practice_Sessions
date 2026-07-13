@@ -676,9 +676,13 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                         <button 
                             onClick={() => {
                                 if (progression.length === 0) return;
+                                const defaultName = `${keyName} ${quality} Custom Jam`;
+                                const userInputName = window.prompt("Enter a name for this custom jam:", defaultName);
+                                if (userInputName === null) return; // User cancelled
+                                
                                 const payload = {
                                     id: `custom_jam_${Date.now()}`,
-                                    name: `${keyName} ${quality} Custom Jam`,
+                                    name: userInputName || defaultName,
                                     chords: progression.map(c => ({ numeral: c.numeral, offset: c.offset, q: c.quality })),
                                     rhythm: style === 'custom' ? customRhythm : undefined,
                                     bpm: bpm,
