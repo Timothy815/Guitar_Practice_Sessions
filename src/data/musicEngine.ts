@@ -43,7 +43,7 @@ export const MINOR_PENTATONIC: ScaleShape[] = [
         id: 2, name: "Shape 2 (D Form)", description: "Root is on the 4th string. Connects the bottom of Shape 1.",
         baseOffset: 2,
         relativeFrets: { 6: [1, 3], 5: [0, 3], 4: [0, 3], 3: [0, 2], 2: [1, 3], 1: [1, 3] },
-        rootPositions: [{ str: 4, fretIdx: 1 }, { str: 2, fretIdx: 1 }],
+        rootPositions: [{ str: 4, fretIdx: 0 }, { str: 2, fretIdx: 1 }],
         chordProgressions: "i - iv",
         chordVoicingsDesc: "D-form minor shape.",
         chords: [
@@ -142,7 +142,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         id: 3, name: "Shape 3 (C Form)", description: "Root is on the 5th string.",
         baseOffset: 4,
         relativeFrets: { 6: [0, 3], 5: [0, 3], 4: [0, 2], 3: [0, 2], 2: [1, 3], 1: [0, 3] },
-        rootPositions: [{ str: 5, fretIdx: 0 }, { str: 2, fretIdx: 0 }],
+        rootPositions: [{ str: 5, fretIdx: 1 }, { str: 2, fretIdx: 0 }],
         chordProgressions: "I - IV",
         chordVoicingsDesc: "C-form major shape.",
         chords: [
@@ -154,7 +154,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         id: 4, name: "Shape 4 (A Form)", description: "Root is on the 5th string.",
         baseOffset: 7,
         relativeFrets: { 6: [0, 2], 5: [0, 2], 4: [-1, 2], 3: [-1, 2], 2: [0, 2], 1: [0, 2] },
-        rootPositions: [{ str: 5, fretIdx: 1 }, { str: 3, fretIdx: 1 }],
+        rootPositions: [{ str: 5, fretIdx: 0 }, { str: 3, fretIdx: 1 }],
         chordProgressions: "I - IV",
         chordVoicingsDesc: "A-form major barre chord.",
         chords: [
@@ -166,7 +166,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         id: 5, name: "Shape 5 (G Form)", description: "Root is on the 6th and 3rd strings.",
         baseOffset: 9,
         relativeFrets: { 6: [0, 3], 5: [0, 2], 4: [0, 2], 3: [0, 2], 2: [0, 3], 1: [0, 3] },
-        rootPositions: [{ str: 6, fretIdx: 0 }, { str: 3, fretIdx: 1 }, { str: 1, fretIdx: 0 }],
+        rootPositions: [{ str: 6, fretIdx: 1 }, { str: 3, fretIdx: 0 }, { str: 1, fretIdx: 1 }],
         chordProgressions: "I - vi",
         chordVoicingsDesc: "G-form major shape.",
         chords: [
@@ -217,7 +217,7 @@ export const MINOR_DIATONIC: ScaleShape[] = [
         id: 2, name: "Shape 2 (D Form)", description: "Root is on the 4th string.",
         baseOffset: 2,
         relativeFrets: { 6: [0, 1, 3], 5: [0, 1, 3], 4: [0, 2, 3], 3: [0, 2, 3], 2: [1, 3, 5], 1: [0, 1, 3] },
-        rootPositions: [{ str: 4, fretIdx: 1 }, { str: 2, fretIdx: 1 }],
+        rootPositions: [{ str: 4, fretIdx: 0 }, { str: 2, fretIdx: 1 }],
         chordProgressions: "i - iv",
         chordVoicingsDesc: "D-form minor shape.",
         chords: [
@@ -229,7 +229,7 @@ export const MINOR_DIATONIC: ScaleShape[] = [
         id: 3, name: "Shape 3 (C Form)", description: "Root is on the 5th string.",
         baseOffset: 5,
         relativeFrets: { 6: [0, 2, 3], 5: [0, 2, 4], 4: [0, 2, 4], 3: [0, 2, 4], 2: [2, 3, 5], 1: [0, 2, 3] },
-        rootPositions: [{ str: 5, fretIdx: 1 }, { str: 2, fretIdx: 0 }],
+        rootPositions: [{ str: 5, fretIdx: 1 }, { str: 3, fretIdx: 2 }],
         chordProgressions: "i - VII",
         chordVoicingsDesc: "C-form minor shape.",
         chords: [
@@ -253,7 +253,7 @@ export const MINOR_DIATONIC: ScaleShape[] = [
         id: 5, name: "Shape 5 (G Form)", description: "Root is on the 6th and 3rd strings.",
         baseOffset: 9,
         relativeFrets: { 6: [-1, 1, 3], 5: [0, 1, 3], 4: [0, 1, 3], 3: [0, 2, 3], 2: [1, 3, 4], 1: [-1, 1, 3] },
-        rootPositions: [{ str: 6, fretIdx: 1 }, { str: 3, fretIdx: 0 }, { str: 1, fretIdx: 1 }],
+        rootPositions: [{ str: 6, fretIdx: 2 }, { str: 3, fretIdx: 0 }, { str: 1, fretIdx: 2 }],
         chordProgressions: "i - v",
         chordVoicingsDesc: "G-form minor shape.",
         chords: [
@@ -293,7 +293,7 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
         id: 3, name: "Shape 3 (C Form)", description: "Root is on the 5th string.",
         baseOffset: 4,
         relativeFrets: { 6: [0, 1, 3], 5: [0, 2, 3], 4: [0, 2, 3], 3: [0, 2, 4], 2: [1, 3, 5], 1: [0, 1, 3] },
-        rootPositions: [{ str: 5, fretIdx: 0 }, { str: 2, fretIdx: 0 }],
+        rootPositions: [{ str: 5, fretIdx: 2 }, { str: 2, fretIdx: 0 }],
         chordProgressions: "I - IV",
         chordVoicingsDesc: "C-form major shape.",
         chords: [
@@ -305,7 +305,7 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
         id: 4, name: "Shape 4 (A Form)", description: "Root is on the 5th string.",
         baseOffset: 7,
         relativeFrets: { 6: [0, 2, 4], 5: [0, 2, 4], 4: [0, 2, 4], 3: [1, 2, 4], 2: [2, 3, 5], 1: [0, 2, 4] },
-        rootPositions: [{ str: 5, fretIdx: 1 }, { str: 3, fretIdx: 1 }],
+        rootPositions: [{ str: 5, fretIdx: 0 }, { str: 3, fretIdx: 1 }],
         chordProgressions: "I - IV",
         chordVoicingsDesc: "A-form major barre chord.",
         chords: [
@@ -317,7 +317,7 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
         id: 5, name: "Shape 5 (G Form)", description: "Root is on the 6th and 3rd strings.",
         baseOffset: 9,
         relativeFrets: { 6: [0, 2, 3], 5: [0, 2, 3], 4: [0, 2, 4], 3: [0, 2, 4], 2: [1, 3, 5], 1: [0, 2, 3] },
-        rootPositions: [{ str: 6, fretIdx: 0 }, { str: 3, fretIdx: 1 }, { str: 1, fretIdx: 0 }],
+        rootPositions: [{ str: 6, fretIdx: 2 }, { str: 3, fretIdx: 0 }, { str: 1, fretIdx: 2 }],
         chordProgressions: "I - vi",
         chordVoicingsDesc: "G-form major shape.",
         chords: [
