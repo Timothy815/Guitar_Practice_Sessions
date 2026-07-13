@@ -94,7 +94,7 @@ export default function Fretboard({ shapeData }: FretboardProps) {
 
                     {/* Draw Notes */}
                     {Array.from({ length: 6 }).map((_, i) => {
-                        const strNum = 6 - i; // 1 to 6 (1 is top visual line)
+                        const strNum = i + 1; // i=0 is top visual line, which is string 1 (high e)
                         const stringFrets = frets[strNum] || [];
                         
                         return stringFrets.map((fret: number, idx: number) => {
