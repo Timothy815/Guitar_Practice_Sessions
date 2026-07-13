@@ -5,15 +5,16 @@ import VexFlowTab from './components/VexFlowTab';
 import Fretboard from './components/Fretboard';
 import ChordDiagram from './components/ChordDiagram';
 import CurriculumView from './components/CurriculumView';
+import ChordSandboxView from './components/ChordSandboxView';
+import DrillsView from './components/DrillsView';
 import { generateRoutine, techniques } from './data/routines';
 import { KEY_OFFSETS } from './data/musicEngine';
 import type { ScaleFamily, ScaleQuality } from './data/musicEngine';
 import type { CurriculumConfig } from './data/curriculum';
-import { Guitar, Printer, Map as MapIcon, Settings2, ListMusic } from 'lucide-react';
-import ChordSandboxView from './components/ChordSandboxView';
+import { Guitar, Printer, Map as MapIcon, Settings2, ListMusic, Zap } from 'lucide-react';
 
 export default function App() {
-    const [viewMode, setViewMode] = useState<'curriculum' | 'sandbox' | 'chords'>('curriculum');
+    const [viewMode, setViewMode] = useState<'curriculum' | 'sandbox' | 'chords' | 'drills'>('curriculum');
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [dayOfWeek, setDayOfWeek] = useState<string>("Monday");
     const [key, setKey] = useState("A");
@@ -74,6 +75,12 @@ export default function App() {
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'chords' ? 'bg-fuchsia-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                         >
                             <ListMusic className="w-4 h-4" /> Chords
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('drills')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'drills' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            <Zap className="w-4 h-4" /> Drills
                         </button>
                     </div>
                 </div>
@@ -145,6 +152,8 @@ export default function App() {
                     family={scaleFamily} 
                     onSettingsClick={() => {}}
                 />
+            ) : viewMode === 'drills' ? (
+                <DrillsView />
             ) : (
                 <>
                     {/* Print Header */}
