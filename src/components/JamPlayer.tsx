@@ -167,29 +167,30 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         const customJam = customJams.find(j => j.id === progId);
         
         if (style === 'custom' && customJam && customJam.rhythm) {
-            // Build custom rhythm measure
-            const measure: any[] = [];
             const originalBpm = customJam.bpm || 90;
-            let currentChordIdx = 0;
             
-            customJam.rhythm.forEach((rVal: number) => {
-                const absoluteSeconds = Math.abs(rVal);
-                const originalBeats = absoluteSeconds / (60.0 / originalBpm);
-                const isRest = rVal < 0;
+            chordMidiArrays.forEach((midiNotes) => {
+                const measure: any[] = [];
+                let soundingNoteIdx = 0;
                 
-                measure.push({
-                    midiNotes: isRest ? [] : chordMidiArrays[currentChordIdx % chordMidiArrays.length],
-                    duration: 'custom',
-                    velocity: isRest ? 0 : 1.0,
-                    absoluteBeatValue: originalBeats,
-                    isRest: isRest
+                customJam.rhythm!.forEach((rVal: number) => {
+                    const absoluteSeconds = Math.abs(rVal);
+                    const originalBeats = absoluteSeconds / (60.0 / originalBpm);
+                    const isRest = rVal < 0;
+                    
+                    measure.push({
+                        midiNotes: isRest || midiNotes.length === 0 ? [] : midiNotes,
+                        duration: 'custom',
+                        velocity: isRest ? 0 : (soundingNoteIdx % 2 === 0 ? 1.0 : 0.7),
+                        absoluteBeatValue: originalBeats,
+                        isRest: isRest
+                    });
+                    
+                    if (!isRest) soundingNoteIdx++;
                 });
-                
-                if (!isRest) {
-                    currentChordIdx++;
-                }
+                measures.push(measure);
             });
-            measures.push(measure);
+            
             return measures;
         }
 
@@ -239,7 +240,12 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
     const scheduleNote = (measureIdx: number, noteIdx: number, time: number): number => {
         if (!audioCtxRef.current) return 0;
         
+        if (!measures || measures.length === 0 || !measures[measureIdx]) {
+            return 0.5; // fallback duration if progression is empty
+        }
+
         const noteData = measures[measureIdx][noteIdx];
+        if (!noteData) return 0.5;
         
         let durationSec = 0;
         let beatValue = 1;
@@ -273,7 +279,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 if (instrumentRef.current) {
                     const strumOffset = index * 0.015; 
                     const volume = noteData.velocity || 1.0;
-                    instrumentRef.current.play(midi, time + strumOffset, { duration: durationSec * 1.5, gain: volume * 1.5 });
+                    instrumentRef.current.play(midi.toString(), time + strumOffset, { duration: durationSec * 1.5, gain: volume * 1.5 });
                 }
             });
         }
