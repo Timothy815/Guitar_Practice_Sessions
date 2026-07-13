@@ -115,9 +115,8 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
     }
 
     const generateMeasures = () => {
-        const measures: { midiNotes: number[], duration: string, velocity?: number, absoluteBeatValue?: number, isRest?: boolean }[][] = [];
-        
-        let chordMidiArrays: number[][] = [];
+        const measures: any[] = [];
+        let chordMidiArrays: { midiNotes: number[], rhythm?: number[] }[] = [];
         
         if (progId === 'shape') {
             // Use the actual chords mapped to this shape position
@@ -133,7 +132,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         notes.push(midi);
                     }
                 }
-                return notes;
+                return { midiNotes: notes };
             });
             
             // Loop short progressions to make 4 bars
@@ -145,56 +144,62 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
             }
         } else if (progId.startsWith('custom_jam_')) {
             const customJam = customJams.find(j => j.id === progId);
-            if (customJam) {
+            if (customJam && customJam.chords) {
                 const keyRoot = shapeData.key;
                 chordMidiArrays = customJam.chords.map((c: any) => {
                     const chordRoot = getNoteByOffset(keyRoot, c.offset);
-                    return getChordMidi(chordRoot, c.q);
+                    return { midiNotes: getChordMidi(chordRoot, c.q), rhythm: c.rhythm };
                 });
             }
         } else {
-            // Build progression dynamically based on Key and Quality
             const prog = availableProgressions.find(p => p.id === progId);
             if (!prog) return [];
-            
             const keyRoot = shapeData.key;
             chordMidiArrays = prog.chords.map(c => {
                 const chordRoot = getNoteByOffset(keyRoot, c.offset);
-                return getChordMidi(chordRoot, c.q);
+                return { midiNotes: getChordMidi(chordRoot, c.q) };
             });
         }
 
         const customJam = customJams.find(j => j.id === progId);
         
-        if (style === 'custom' && customJam && customJam.rhythm) {
-            const originalBpm = customJam.bpm || 90;
+        if (style === 'custom') {
+            const originalBpm = customJam?.bpm || 90;
+            const globalRhythm = customJam?.rhythm;
             
-            chordMidiArrays.forEach((midiNotes) => {
+            chordMidiArrays.forEach((chordData) => {
                 const measure: any[] = [];
                 let soundingNoteIdx = 0;
                 
-                customJam.rhythm!.forEach((rVal: number) => {
-                    const absoluteSeconds = Math.abs(rVal);
-                    const originalBeats = absoluteSeconds / (60.0 / originalBpm);
-                    const isRest = rVal < 0;
-                    
-                    measure.push({
-                        midiNotes: isRest || midiNotes.length === 0 ? [] : midiNotes,
-                        duration: 'custom',
-                        velocity: isRest ? 0 : (soundingNoteIdx % 2 === 0 ? 1.0 : 0.7),
-                        absoluteBeatValue: originalBeats,
-                        isRest: isRest
+                const activeRhythm = chordData.rhythm || globalRhythm;
+                
+                if (activeRhythm) {
+                    activeRhythm.forEach((rVal: number) => {
+                        const absoluteSeconds = Math.abs(rVal);
+                        const originalBeats = absoluteSeconds / (60.0 / originalBpm);
+                        const isRest = rVal < 0;
+                        
+                        measure.push({
+                            midiNotes: isRest || chordData.midiNotes.length === 0 ? [] : chordData.midiNotes,
+                            duration: 'custom',
+                            velocity: isRest ? 0 : (soundingNoteIdx % 2 === 0 ? 1.0 : 0.7),
+                            absoluteBeatValue: originalBeats,
+                            isRest: isRest
+                        });
+                        
+                        if (!isRest) soundingNoteIdx++;
                     });
-                    
-                    if (!isRest) soundingNoteIdx++;
-                });
+                } else {
+                    measure.push({ midiNotes: chordData.midiNotes, duration: "1n", velocity: 0.9 });
+                }
                 measures.push(measure);
             });
             
             return measures;
         }
 
-        chordMidiArrays.forEach(midiNotes => {
+        chordMidiArrays.forEach(chordData => {
+            const midiNotes = chordData.midiNotes;
             if (style === 'quarters') {
                 measures.push([
                     { midiNotes, duration: "q", velocity: 1.0 },

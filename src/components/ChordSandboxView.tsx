@@ -21,7 +21,14 @@ const ROOT_MIDI: Record<string, number> = {
 };
 
 export default function ChordSandboxView({ keyName, quality, family, onSettingsClick }: ChordSandboxViewProps) {
-    const [progression, setProgression] = useState<any[]>([]);
+    interface ProgressionItem {
+        id: string;
+        chord: any;
+        rhythm?: number[];
+    }
+    
+    const [progression, setProgression] = useState<ProgressionItem[]>([]);
+    const [selectedProgIndex, setSelectedProgIndex] = useState<number | null>(null);
     const [isPlaying, setIsPlaying] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [bpm, setBpm] = useState(90);
@@ -75,7 +82,8 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         
         // Play audio feedback for the tap
         if (progression.length > 0) {
-            playChordOnce(progression[0]);
+            const idx = selectedProgIndex !== null ? selectedProgIndex : 0;
+            playChordOnce(progression[idx].chord);
         }
         
         if (lastTapTimeRef.current === 0) {
@@ -135,11 +143,21 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             if (lastRest < 0) {
                 tempRhythmRef.current.push(lastRest);
             } else if (tempRhythmRef.current.length > 0 && tempRhythmRef.current[tempRhythmRef.current.length - 1] > 0) {
-                // If they never rested, duplicate the last sound duration as a rest to give some loop padding
                 tempRhythmRef.current.push(-tempRhythmRef.current[tempRhythmRef.current.length - 1]);
             }
             
-            setCustomRhythm([...tempRhythmRef.current]);
+            if (selectedProgIndex !== null) {
+                setProgression(prev => {
+                    const newProg = [...prev];
+                    newProg[selectedProgIndex] = {
+                        ...newProg[selectedProgIndex],
+                        rhythm: [...tempRhythmRef.current]
+                    };
+                    return newProg;
+                });
+            } else {
+                setCustomRhythm([...tempRhythmRef.current]);
+            }
             setStyle('custom');
         }
     };
@@ -234,7 +252,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     pitchClasses: getChordPitchClasses(c.frets)
                 }));
 
-                const newProgression: any[] = [];
+                const newProgression: ProgressionItem[] = [];
                 const newRhythm: number[] = [];
                 let lastTime = 0;
                 let matchesFound = 0;
@@ -265,7 +283,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     }
                     
                     if (bestMatch) {
-                        newProgression.push(bestMatch);
+                        newProgression.push({ id: Math.random().toString(), chord: bestMatch });
                         matchesFound++;
                     }
                 });
@@ -422,13 +440,44 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                 }
             }
 
-            const chord = progression[currentMeasureRef.current];
+            const item = progression[currentMeasureRef.current];
+            const chord = item.chord;
             const rootName = chord.name.replace(/m|dim/, '');
             const midiNotes = getChordMidi(rootName, chord.quality);
             
             const secondsPerBeat = 60.0 / bpm;
+            const activeRhythm = item.rhythm || (style === 'custom' ? customRhythm : null);
             
-            if (style === 'folk') {
+            if (activeRhythm) {
+                if (activeRhythm.length === 0) {
+                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.8 }));
+                    nextNoteTimeRef.current += secondsPerBeat * 4;
+                    currentNoteRef.current = 0;
+                    currentMeasureRef.current++;
+                } else {
+                    const val = activeRhythm[currentNoteRef.current];
+                    
+                    if (val > 0) {
+                        // Sounding note
+                        if (currentNoteRef.current % 2 === 0) {
+                            midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.8 }));
+                        } else {
+                            [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.6 }));
+                        }
+                        nextNoteTimeRef.current += val;
+                    } else {
+                        // Rest
+                        nextNoteTimeRef.current += Math.abs(val);
+                    }
+                    
+                    currentNoteRef.current++;
+                    
+                    if (currentNoteRef.current >= activeRhythm.length) {
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
+                    }
+                }
+            } else if (style === 'folk') {
                 if (currentNoteRef.current === 0) {
                     midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat * 2, gain: 0.8 }));
                     nextNoteTimeRef.current += secondsPerBeat * 2;
@@ -501,35 +550,6 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     currentNoteRef.current = 0;
                     currentMeasureRef.current++;
                 }
-            } else if (style === 'custom') {
-                if (customRhythm.length === 0) {
-                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.8 }));
-                    nextNoteTimeRef.current += secondsPerBeat * 4;
-                    currentNoteRef.current = 0;
-                    currentMeasureRef.current++;
-                } else {
-                    const val = customRhythm[currentNoteRef.current];
-                    
-                    if (val > 0) {
-                        // Sounding note
-                        if (currentNoteRef.current % 2 === 0) {
-                            midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.8 }));
-                        } else {
-                            [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.6 }));
-                        }
-                        nextNoteTimeRef.current += val;
-                    } else {
-                        // Rest
-                        nextNoteTimeRef.current += Math.abs(val);
-                    }
-                    
-                    currentNoteRef.current++;
-                    
-                    if (currentNoteRef.current >= customRhythm.length) {
-                        currentNoteRef.current = 0;
-                        currentMeasureRef.current++;
-                    }
-                }
             }
 
             setCurrentPlayIndex(currentMeasureRef.current === 0 && currentNoteRef.current === 0 ? progression.length - 1 : currentMeasureRef.current - (currentNoteRef.current === 0 ? 1 : 0));
@@ -565,7 +585,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                             key={idx}
                             onClick={() => {
                                 playChordOnce(chord);
-                                setProgression([...progression, chord]);
+                                setProgression([...progression, { id: Math.random().toString(), chord }]);
                             }}
                             className="bg-white/5 hover:bg-primary/20 hover:border-primary/50 border border-white/10 rounded-xl p-4 cursor-pointer transition-all group"
                         >
@@ -600,7 +620,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                             <option value="custom">Custom</option>
                         </select>
                         
-                        {style === 'custom' && (
+                        {(style === 'custom' || selectedProgIndex !== null) && (
                             <div className="flex items-center gap-2 border-l border-white/10 pl-4 ml-2">
                                 {isTapping ? (
                                     <>
@@ -627,7 +647,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                             onClick={startTapping}
                                             className="px-3 py-1.5 bg-indigo-500/20 hover:bg-indigo-500/40 text-indigo-300 border border-indigo-500/30 rounded-lg text-sm transition-all"
                                         >
-                                            Record Tap
+                                            {selectedProgIndex !== null ? `Record Tap for ${progression[selectedProgIndex]?.chord.name}` : 'Record Tap'}
                                         </button>
                                         <div className="flex items-center gap-1 border-l border-white/10 pl-2 ml-1">
                                             <label 
@@ -644,7 +664,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                                 onChange={handleImportMIDI} 
                                                 className="hidden" 
                                             />
-                                            {customRhythm.length > 0 && (
+                                            {customRhythm.length > 0 && selectedProgIndex === null && (
                                                 <button 
                                                     onClick={handleExportMIDI}
                                                     className="p-1.5 bg-white/5 hover:bg-white/10 text-slate-300 rounded-lg cursor-pointer transition-colors"
@@ -656,8 +676,11 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                         </div>
                                     </>
                                 )}
-                                {customRhythm.length > 0 && !isTapping && (
+                                {customRhythm.length > 0 && !isTapping && selectedProgIndex === null && (
                                     <span className="text-xs text-emerald-400 font-mono ml-2">({customRhythm.length} beats)</span>
+                                )}
+                                {selectedProgIndex !== null && progression[selectedProgIndex]?.rhythm && !isTapping && (
+                                    <span className="text-xs text-emerald-400 font-mono ml-2">({progression[selectedProgIndex].rhythm!.length} beats)</span>
                                 )}
                             </div>
                         )}
@@ -683,7 +706,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 const payload = {
                                     id: `custom_jam_${Date.now()}`,
                                     name: userInputName || defaultName,
-                                    chords: progression.map(c => ({ numeral: c.numeral, offset: c.offset, q: c.quality })),
+                                    chords: progression.map(item => ({ numeral: item.chord.numeral, offset: item.chord.offset, q: item.chord.quality, rhythm: item.rhythm })),
                                     rhythm: style === 'custom' ? customRhythm : undefined,
                                     bpm: bpm,
                                     style: style
@@ -725,30 +748,56 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     </div>
                 ) : (
                     <div className="flex flex-wrap gap-4">
-                        {progression.map((chord, idx) => (
+                        {progression.map((item, idx) => (
                             <div 
-                                key={idx}
+                                key={item.id}
                                 draggable
+                                onClick={() => setSelectedProgIndex(selectedProgIndex === idx ? null : idx)}
                                 onDragStart={() => handleDragStart(idx)}
                                 onDragOver={(e) => handleDragOver(e, idx)}
                                 onDrop={handleDrop}
                                 className={`relative bg-black/40 border p-4 rounded-xl flex items-center gap-4 cursor-grab active:cursor-grabbing transition-colors ${
                                     currentPlayIndex === idx 
                                         ? 'border-indigo-500 shadow-[0_0_15px_rgba(99,102,241,0.5)]' 
-                                        : draggedIdx === idx ? 'border-primary opacity-50' : 'border-white/10'
+                                        : selectedProgIndex === idx ? 'border-primary shadow-[0_0_10px_rgba(56,189,248,0.3)] bg-primary/10' : draggedIdx === idx ? 'border-primary opacity-50' : 'border-white/10 hover:border-white/30'
                                 }`}
                             >
                                 <div className="text-center">
-                                    <p className={`text-xl font-bold ${currentPlayIndex === idx ? 'text-white' : 'text-slate-300'}`}>{chord.name}</p>
-                                    <p className="text-xs text-slate-500 font-mono mt-1">{chord.numeral}</p>
+                                    <p className={`text-xl font-bold ${currentPlayIndex === idx ? 'text-white' : 'text-slate-300'}`}>{item.chord.name}</p>
+                                    <p className="text-xs text-slate-500 font-mono mt-1">{item.chord.numeral}</p>
+                                    {item.rhythm && (
+                                        <p className="text-[10px] text-emerald-400 mt-1 uppercase font-bold tracking-wider">Custom Rhythm</p>
+                                    )}
                                 </div>
-                                <button 
-                                    onClick={() => setProgression(p => p.filter((_, i) => i !== idx))}
-                                    className="p-2 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
-                                    title="Remove Chord"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+                                <div className="flex flex-col gap-2">
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
+                                            setProgression(p => p.filter((_, i) => i !== idx));
+                                            if (selectedProgIndex === idx) setSelectedProgIndex(null);
+                                        }}
+                                        className="p-1.5 text-slate-500 hover:text-rose-400 hover:bg-rose-500/10 rounded-lg transition-colors"
+                                        title="Remove Chord"
+                                    >
+                                        <Trash2 className="w-4 h-4" />
+                                    </button>
+                                    {item.rhythm && (
+                                        <button 
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setProgression(prev => {
+                                                    const newProg = [...prev];
+                                                    newProg[idx] = { ...newProg[idx], rhythm: undefined };
+                                                    return newProg;
+                                                });
+                                            }}
+                                            className="p-1.5 text-slate-500 hover:text-amber-400 hover:bg-amber-500/10 rounded-lg transition-colors"
+                                            title="Clear Custom Rhythm"
+                                        >
+                                            <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M3 3l18 18M10.5 10.5l-6-6m15 15l-6-6M9 9l-4 4m14-14l-4 4"/></svg>
+                                        </button>
+                                    )}
+                                </div>
                             </div>
                         ))}
                     </div>
@@ -761,12 +810,12 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     <p className="text-gray-500 italic">No chords added to progression yet.</p>
                 ) : (
                     <div className="grid grid-cols-4 gap-6">
-                        {progression.map((chord, idx) => (
-                            <div key={idx} className="border-2 border-gray-300 p-4 rounded-xl flex flex-col items-center justify-center break-inside-avoid">
-                                <p className="text-2xl font-bold text-black mb-1">{chord.name}</p>
-                                <p className="text-lg text-gray-600 font-mono mb-4">{chord.numeral}</p>
+                        {progression.map((item) => (
+                            <div key={item.id} className="border-2 border-gray-300 p-4 rounded-xl flex flex-col items-center justify-center break-inside-avoid">
+                                <p className="text-2xl font-bold text-black mb-1">{item.chord.name}</p>
+                                <p className="text-lg text-gray-600 font-mono mb-4">{item.chord.numeral}</p>
                                 <div className="transform scale-90">
-                                    <ChordDiagram chord={{...chord, name: ''}} />
+                                    <ChordDiagram chord={{...item.chord, name: ''}} />
                                 </div>
                             </div>
                         ))}
