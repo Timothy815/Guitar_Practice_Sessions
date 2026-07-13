@@ -483,6 +483,7 @@ export function getAllDiatonicChords(key: string, quality: ScaleQuality, family:
             name: `${rootNote}${qLabel}`,
             numeral: c.numeral,
             quality: c.q,
+            offset: c.offset,
             barre: barre > 0 ? barre : undefined,
             frets
         };
