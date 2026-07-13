@@ -39,8 +39,7 @@ export default function DrillsView() {
                 // fingerOffset is 1,2,3,4. 1 corresponds to startFret
                 const fret = startFret + fingerOffset - 1;
                 return {
-                    str: stringNum,
-                    fret: fret,
+                    positions: [{ str: stringNum, fret: fret }],
                     duration: '8' // 8th notes
                 };
             });
