@@ -47,8 +47,8 @@ export const MINOR_PENTATONIC: ScaleShape[] = [
         chordProgressions: "i - iv",
         chordVoicingsDesc: "D-form minor shape.",
         chords: [
-            { numeral: 'i', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1], barreRelative: 1 },
-            { numeral: 'iv', quality: 'm', frets: ['x', 0, 2, 2, 1, 0], barreRelative: 0 }
+            { numeral: 'i', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1] },
+            { numeral: 'iv', quality: 'm', frets: [3, 5, 5, 3, 3, 3], barreRelative: 3 }
         ]
     },
     {
@@ -59,8 +59,8 @@ export const MINOR_PENTATONIC: ScaleShape[] = [
         chordProgressions: "i - VII",
         chordVoicingsDesc: "C-form minor shape leading into the VII major chord.",
         chords: [
-            { numeral: 'i', quality: 'm', frets: ['x', 2, 1, 1, 0, 'x'], barreRelative: 0 },
-            { numeral: 'VII', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 0 }
+            { numeral: 'i', quality: 'm', frets: ['x', 3, 5, 5, 4, 3], barreRelative: 3 },
+            { numeral: 'VII', quality: '', frets: ['x', 1, 3, 3, 3, 1], barreRelative: 1 }
         ]
     },
     {
@@ -72,7 +72,7 @@ export const MINOR_PENTATONIC: ScaleShape[] = [
         chordVoicingsDesc: "A-form minor barre chord.",
         chords: [
             { numeral: 'i', quality: 'm', frets: ['x', 0, 2, 2, 1, 0], barreRelative: 0 },
-            { numeral: 'iv', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1], barreRelative: 1 }
+            { numeral: 'iv', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1] }
         ]
     },
     {
@@ -83,8 +83,8 @@ export const MINOR_PENTATONIC: ScaleShape[] = [
         chordProgressions: "i - v",
         chordVoicingsDesc: "G-form minor shape.",
         chords: [
-            { numeral: 'i', quality: 'm', frets: [3, 1, 1, 0, 'x', 'x'], barreRelative: 0 },
-            { numeral: 'v', quality: 'm', frets: [0, 2, 2, 0, 0, 0], barreRelative: 0 }
+            { numeral: 'i', quality: 'm', frets: [3, 5, 5, 3, 3, 3], barreRelative: 3 },
+            { numeral: 'v', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1] }
         ]
     }
 ];
@@ -134,7 +134,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         chordProgressions: "I - V",
         chordVoicingsDesc: "D-form major shape.",
         chords: [
-            { numeral: 'I', quality: '', frets: ['x', 'x', 0, 2, 3, 2], barreRelative: 2 },
+            { numeral: 'I', quality: '', frets: ['x', 'x', 0, 2, 3, 2] },
             { numeral: 'V', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 0 }
         ]
     },
@@ -147,7 +147,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         chordVoicingsDesc: "C-form major shape.",
         chords: [
             { numeral: 'I', quality: '', frets: ['x', 3, 2, 0, 1, 0], barreRelative: 0 },
-            { numeral: 'IV', quality: '', frets: ['x', 'x', 0, 2, 3, 2], barreRelative: 0 }
+            { numeral: 'IV', quality: '', frets: [1, 3, 3, 2, 1, 1], barreRelative: 1 }
         ]
     },
     {
@@ -159,7 +159,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         chordVoicingsDesc: "A-form major barre chord.",
         chords: [
             { numeral: 'I', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 0 },
-            { numeral: 'IV', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 5 }
+            { numeral: 'IV', quality: '', frets: ['x', 'x', 0, 2, 3, 2] }
         ]
     },
     {
@@ -171,7 +171,7 @@ export const MAJOR_PENTATONIC: ScaleShape[] = [
         chordVoicingsDesc: "G-form major shape.",
         chords: [
             { numeral: 'I', quality: '', frets: [3, 2, 0, 0, 0, 3], barreRelative: 0 },
-            { numeral: 'vi', quality: 'm', frets: [0, 2, 2, 0, 0, 0], barreRelative: -1 } 
+            { numeral: 'vi', quality: 'm', frets: ['x', 3, 5, 5, 4, 3], barreRelative: 3 } 
         ]
     }
 ];
@@ -221,8 +221,8 @@ export const MINOR_DIATONIC: ScaleShape[] = [
         chordProgressions: "i - iv",
         chordVoicingsDesc: "D-form minor shape.",
         chords: [
-            { numeral: 'i', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1], barreRelative: 1 },
-            { numeral: 'iv', quality: 'm', frets: ['x', 0, 2, 2, 1, 0], barreRelative: 0 }
+            { numeral: 'i', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1] },
+            { numeral: 'iv', quality: 'm', frets: [3, 5, 5, 3, 3, 3], barreRelative: 3 }
         ]
     },
     {
@@ -233,8 +233,8 @@ export const MINOR_DIATONIC: ScaleShape[] = [
         chordProgressions: "i - VII",
         chordVoicingsDesc: "C-form minor shape.",
         chords: [
-            { numeral: 'i', quality: 'm', frets: ['x', 2, 1, 1, 0, 'x'], barreRelative: 0 },
-            { numeral: 'VII', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 0 }
+            { numeral: 'i', quality: 'm', frets: ['x', 3, 5, 5, 4, 3], barreRelative: 3 },
+            { numeral: 'VII', quality: '', frets: ['x', 1, 3, 3, 3, 1], barreRelative: 1 }
         ]
     },
     {
@@ -246,7 +246,7 @@ export const MINOR_DIATONIC: ScaleShape[] = [
         chordVoicingsDesc: "A-form minor barre chord.",
         chords: [
             { numeral: 'i', quality: 'm', frets: ['x', 0, 2, 2, 1, 0], barreRelative: 0 },
-            { numeral: 'iv', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1], barreRelative: 1 }
+            { numeral: 'iv', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1] }
         ]
     },
     {
@@ -257,8 +257,8 @@ export const MINOR_DIATONIC: ScaleShape[] = [
         chordProgressions: "i - v",
         chordVoicingsDesc: "G-form minor shape.",
         chords: [
-            { numeral: 'i', quality: 'm', frets: [3, 1, 1, 0, 'x', 'x'], barreRelative: 0 },
-            { numeral: 'v', quality: 'm', frets: [0, 2, 2, 0, 0, 0], barreRelative: 0 }
+            { numeral: 'i', quality: 'm', frets: [3, 5, 5, 3, 3, 3], barreRelative: 3 },
+            { numeral: 'v', quality: 'm', frets: ['x', 'x', 0, 2, 3, 1] }
         ]
     }
 ];
@@ -285,7 +285,7 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
         chordProgressions: "I - V",
         chordVoicingsDesc: "D-form major shape.",
         chords: [
-            { numeral: 'I', quality: '', frets: ['x', 'x', 0, 2, 3, 2], barreRelative: 2 },
+            { numeral: 'I', quality: '', frets: ['x', 'x', 0, 2, 3, 2] },
             { numeral: 'V', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 0 }
         ]
     },
@@ -298,7 +298,7 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
         chordVoicingsDesc: "C-form major shape.",
         chords: [
             { numeral: 'I', quality: '', frets: ['x', 3, 2, 0, 1, 0], barreRelative: 0 },
-            { numeral: 'IV', quality: '', frets: ['x', 'x', 0, 2, 3, 2], barreRelative: 0 }
+            { numeral: 'IV', quality: '', frets: [1, 3, 3, 2, 1, 1], barreRelative: 1 }
         ]
     },
     {
@@ -310,7 +310,7 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
         chordVoicingsDesc: "A-form major barre chord.",
         chords: [
             { numeral: 'I', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 0 },
-            { numeral: 'IV', quality: '', frets: ['x', 0, 2, 2, 2, 0], barreRelative: 5 }
+            { numeral: 'IV', quality: '', frets: ['x', 'x', 0, 2, 3, 2] }
         ]
     },
     {
@@ -322,7 +322,7 @@ export const MAJOR_DIATONIC: ScaleShape[] = [
         chordVoicingsDesc: "G-form major shape.",
         chords: [
             { numeral: 'I', quality: '', frets: [3, 2, 0, 0, 0, 3], barreRelative: 0 },
-            { numeral: 'vi', quality: 'm', frets: [0, 2, 2, 0, 0, 0], barreRelative: -1 } 
+            { numeral: 'vi', quality: 'm', frets: ['x', 3, 5, 5, 4, 3], barreRelative: 3 } 
         ]
     }
 ];
