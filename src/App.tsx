@@ -150,7 +150,7 @@ export default function App() {
                     keyName={key} 
                     quality={scaleQuality} 
                     family={scaleFamily} 
-                    onSettingsClick={() => {}}
+                    onSettingsClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
                 />
             ) : viewMode === 'drills' ? (
                 <DrillsView />
