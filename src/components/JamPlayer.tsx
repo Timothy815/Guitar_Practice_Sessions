@@ -752,11 +752,18 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 <div className="flex flex-col flex-1 relative">
                     <div className="text-xs text-indigo-300 uppercase tracking-wider mb-1 font-bold flex items-center justify-between w-full">
                         <span className="flex items-center gap-2"><Music className="w-3 h-3" /> Chord Progression</span>
-                        {progId.startsWith('custom_jam_') && (
-                            <button onClick={handleDeleteCustomJam} className="text-red-400 hover:text-red-300 transition-colors" title="Delete Custom Jam">
-                                <Trash2 className="w-3.5 h-3.5" />
-                            </button>
-                        )}
+                        <div className="flex gap-2 items-center">
+                            <label className="cursor-pointer flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors" title="Upload MIDI File">
+                                <Upload className="w-3.5 h-3.5" />
+                                <span className="text-[10px]">Import MIDI</span>
+                                <input type="file" accept=".mid,.midi" className="hidden" onChange={handleMidiUpload} />
+                            </label>
+                            {progId.startsWith('custom_jam_') && (
+                                <button onClick={handleDeleteCustomJam} className="text-red-400 hover:text-red-300 transition-colors" title="Delete Custom Jam">
+                                    <Trash2 className="w-3.5 h-3.5" />
+                                </button>
+                            )}
+                        </div>
                     </div>
                     <select 
                         value={progId}

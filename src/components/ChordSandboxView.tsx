@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Square, Settings2, Trash2, Download, Upload, Edit2, X } from 'lucide-react';
+import { Play, Square, Trash2, Download, Upload, Edit2, X } from 'lucide-react';
 import Soundfont from 'soundfont-player';
 import { Midi } from '@tonejs/midi';
 // @ts-ignore
@@ -14,7 +14,7 @@ interface ChordSandboxViewProps {
     keyName: string;
     quality: ScaleQuality;
     family: ScaleFamily;
-    onSettingsClick: () => void;
+    
 }
 
 const ROOT_MIDI: Record<string, number> = {
@@ -32,7 +32,7 @@ const STRING_MIDI_BASE = {
     1: 64  // E4
 };
 
-export default function ChordSandboxView({ keyName, quality, family, onSettingsClick }: ChordSandboxViewProps) {
+export default function ChordSandboxView({ keyName, quality, family }: ChordSandboxViewProps) {
     interface ProgressionItem {
         id: string;
         chord: any;

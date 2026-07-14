@@ -151,20 +151,6 @@ export default function App() {
                     keyName={key} 
                     quality={scaleQuality} 
                     family={scaleFamily} 
-                    onSettingsClick={() => {
-                        window.scrollTo({ top: 0, behavior: 'smooth' });
-                        setTimeout(() => {
-                            const container = document.getElementById('global-key-container');
-                            const selector = document.getElementById('global-key-selector');
-                            if (container && selector) {
-                                selector.focus();
-                                container.classList.add('ring-2', 'ring-fuchsia-500', 'shadow-[0_0_15px_rgba(217,70,239,0.5)]');
-                                setTimeout(() => {
-                                    container.classList.remove('ring-2', 'ring-fuchsia-500', 'shadow-[0_0_15px_rgba(217,70,239,0.5)]');
-                                }, 2000);
-                            }
-                        }, 500);
-                    }}
                 />
             ) : viewMode === 'drills' ? (
                 <DrillsView />
