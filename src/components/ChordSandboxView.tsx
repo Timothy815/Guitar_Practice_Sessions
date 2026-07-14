@@ -494,10 +494,32 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     
                     if (val > 0) {
                         // Sounding note
-                        if (currentNoteRef.current % 2 === 0) {
-                            midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.8 }));
-                        } else {
-                            [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.6 }));
+                        let customArpStep: number[] | null = null;
+                        if (item.arpeggioPattern && item.arpeggioPattern.length > 0) {
+                            let rawPattern = item.arpeggioPattern;
+                            if (typeof rawPattern[0] === 'number') {
+                                rawPattern = (rawPattern as any[]).map(v => v === -1 ? [] : [v]);
+                            }
+                            const pattern = rawPattern as number[][];
+                            const arpStepCol = pattern[currentNoteRef.current % pattern.length];
+                            if (arpStepCol) {
+                                customArpStep = arpStepCol.map(idx => {
+                                    const fretVal = chord.frets[idx];
+                                    if (fretVal === 'x' || fretVal === undefined) return null;
+                                    const strNum = 6 - idx;
+                                    return (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
+                                }).filter(m => m !== null) as number[];
+                            }
+                        }
+
+                        if (customArpStep && customArpStep.length > 0) {
+                            customArpStep.forEach(m => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current, { duration: val, gain: 0.8 }));
+                        } else if (!customArpStep) {
+                            if (currentNoteRef.current % 2 === 0) {
+                                midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.8 }));
+                            } else {
+                                [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.6 }));
+                            }
                         }
                         nextNoteTimeRef.current += val;
                     } else {
@@ -724,8 +746,23 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     return [ { positions: allPositions, duration: 'w' } ];
                 }
                 
+                let arpTabSequence: {str: number, fret: string|number}[][] | undefined = undefined;
+                if (item.arpeggioPattern && item.arpeggioPattern.length > 0) {
+                    let rawPattern = item.arpeggioPattern;
+                    if (typeof rawPattern[0] === 'number') {
+                        rawPattern = (rawPattern as any[]).map(val => val === -1 ? [] : [val]);
+                    }
+                    arpTabSequence = (rawPattern as number[][]).map(col => {
+                        return col.map(idx => {
+                            const fretVal = item.chord.frets[idx];
+                            if (fretVal === 'x' || fretVal === undefined) return null;
+                            return { str: 6 - idx, fret: fretVal };
+                        }).filter(p => p !== null) as {str: number, fret: string|number}[];
+                    });
+                }
+                
                 const tabMeasure: TabNoteData[] = [];
-                activeRhythm.forEach((rVal: number) => {
+                activeRhythm.forEach((rVal: number, index: number) => {
                     const absoluteSeconds = Math.abs(rVal);
                     const originalBeats = absoluteSeconds / (60.0 / bpm);
                     const isRest = rVal < 0;
@@ -740,7 +777,17 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     if (isRest) {
                         tabMeasure.push({ duration: durationCode + "r", positions: [] });
                     } else {
-                        tabMeasure.push({ duration: durationCode, positions: allPositions });
+                        let stepPositions = allPositions;
+                        if (arpTabSequence) {
+                            const arpStep = arpTabSequence[index % arpTabSequence.length];
+                            if (arpStep && arpStep.length > 0) {
+                                stepPositions = arpStep;
+                            } else {
+                                tabMeasure.push({ duration: durationCode + "r", positions: [] });
+                                return;
+                            }
+                        }
+                        tabMeasure.push({ duration: durationCode, positions: stepPositions });
                     }
                 });
                 return tabMeasure;

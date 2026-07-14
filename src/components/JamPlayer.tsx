@@ -199,18 +199,56 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 
                 const activeRhythm = chordData.rhythm || globalRhythm;
                 
+                let arpAudioSeq: {midi: number[], p: {str: number, fret: string|number}[]}[] | undefined = undefined;
+                if (chordData.arpeggioPattern && chordData.arpeggioPattern.length > 0) {
+                    let rawPattern = chordData.arpeggioPattern;
+                    if (typeof rawPattern[0] === 'number') {
+                        rawPattern = (rawPattern as any[]).map(val => val === -1 ? [] : [val]);
+                    }
+                    arpAudioSeq = (rawPattern as number[][]).map(col => {
+                        if (col.length === 0) return {midi: [], p: []};
+                        const midiNotesForStep: number[] = [];
+                        const positionsForStep: {str: number, fret: string|number}[] = [];
+                        col.forEach(idx => {
+                            const fretVal = chordData.frets ? chordData.frets[idx] : undefined;
+                            if (fretVal === 'x' || fretVal === undefined) return;
+                            const strNum = 6 - idx;
+                            const midi = (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
+                            midiNotesForStep.push(midi);
+                            positionsForStep.push({ str: strNum, fret: fretVal });
+                        });
+                        return { midi: midiNotesForStep, p: positionsForStep };
+                    });
+                }
+                
                 if (activeRhythm) {
-                    activeRhythm.forEach((rVal: number) => {
+                    activeRhythm.forEach((rVal: number, index: number) => {
                         const absoluteSeconds = Math.abs(rVal);
                         const originalBeats = absoluteSeconds / (60.0 / originalBpm);
                         const isRest = rVal < 0;
                         
+                        let stepMidi = isRest || chordData.midiNotes.length === 0 ? [] : chordData.midiNotes;
+                        let stepPositions = chordData.positions || [];
+                        let isArpRest = false;
+                        
+                        if (!isRest && arpAudioSeq) {
+                            const arpStep = arpAudioSeq[index % arpAudioSeq.length];
+                            if (arpStep && arpStep.midi.length > 0) {
+                                stepMidi = arpStep.midi;
+                                stepPositions = arpStep.p;
+                            } else {
+                                isArpRest = true;
+                                stepMidi = [];
+                                stepPositions = [];
+                            }
+                        }
+                        
                         measure.push({
-                            midiNotes: isRest || chordData.midiNotes.length === 0 ? [] : chordData.midiNotes,
+                            midiNotes: stepMidi,
                             duration: 'custom',
-                            velocity: isRest ? 0 : (soundingNoteIdx % 2 === 0 ? 1.0 : 0.7),
+                            velocity: (isRest || isArpRest) ? 0 : (soundingNoteIdx % 2 === 0 ? 1.0 : 0.7),
                             absoluteBeatValue: originalBeats,
-                            isRest: isRest
+                            isRest: isRest || isArpRest
                         });
                         
                         let durationCode = "q";
@@ -220,13 +258,13 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         else if (originalBeats <= 2.0) durationCode = "h";
                         else durationCode = "w";
                         
-                        if (isRest) {
+                        if (isRest || isArpRest) {
                             tabMeasure.push({ duration: durationCode + "r", positions: [] });
                         } else {
-                            tabMeasure.push({ duration: durationCode, positions: chordData.positions || [] });
+                            tabMeasure.push({ duration: durationCode, positions: stepPositions });
                         }
                         
-                        if (!isRest) soundingNoteIdx++;
+                        if (!isRest && !isArpRest) soundingNoteIdx++;
                     });
                 } else {
                     measure.push({ midiNotes: chordData.midiNotes, duration: "1n", velocity: 0.9 });
