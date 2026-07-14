@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { Play, Square, Settings2, Trash2, Download, Upload } from 'lucide-react';
+import { Play, Square, Settings2, Trash2, Download, Upload, Edit2, X } from 'lucide-react';
 import Soundfont from 'soundfont-player';
 import { Midi } from '@tonejs/midi';
 // @ts-ignore
@@ -35,6 +35,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
     const [style, setStyle] = useState('folk'); // 'folk' | 'rock' | 'waltz' | 'arpeggio' | 'funk' | 'custom'
     const [currentPlayIndex, setCurrentPlayIndex] = useState(-1);
     const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+    const [editingChordIndex, setEditingChordIndex] = useState<number | null>(null);
 
     // Tap recorder state
     const [customRhythm, setCustomRhythm] = useState<number[]>([]);
@@ -773,6 +774,16 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                     <button 
                                         onClick={(e) => {
                                             e.stopPropagation();
+                                            setEditingChordIndex(idx);
+                                        }}
+                                        className="p-1.5 text-slate-500 hover:text-indigo-400 hover:bg-indigo-500/10 rounded-lg transition-colors mb-1"
+                                        title="Edit Chord Voicing"
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
+                                    <button 
+                                        onClick={(e) => {
+                                            e.stopPropagation();
                                             setProgression(p => p.filter((_, i) => i !== idx));
                                             if (selectedProgIndex === idx) setSelectedProgIndex(null);
                                         }}
@@ -822,6 +833,75 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     </div>
                 )}
             </div>
+
+            {/* Edit Voicing Modal */}
+            {editingChordIndex !== null && progression[editingChordIndex] && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+                    <div className="bg-slate-900 border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl relative">
+                        <button 
+                            onClick={() => setEditingChordIndex(null)}
+                            className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
+                        >
+                            <X className="w-5 h-5" />
+                        </button>
+                        
+                        <h3 className="text-xl font-bold text-white mb-2">Edit Voicing</h3>
+                        <p className="text-slate-400 text-sm mb-6">Click on a string below to toggle muting (X) for this chord in your progression.</p>
+                        
+                        <div className="flex justify-center mb-8">
+                            <ChordDiagram chord={progression[editingChordIndex].chord} />
+                        </div>
+
+                        <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/5">
+                            {[6, 5, 4, 3, 2, 1].map((strNum, idx) => {
+                                // Strings are standard E A D G B E, array is 0-indexed where 0 is 6th string (Low E)
+                                const originalChord = chords.find(c => c.numeral === progression[editingChordIndex].chord.numeral);
+                                const isOriginallyMuted = originalChord?.frets[idx] === 'x';
+                                const currentlyMuted = progression[editingChordIndex].chord.frets[idx] === 'x';
+                                const stringNames = ['E', 'A', 'D', 'G', 'B', 'e'];
+                                
+                                return (
+                                    <div key={strNum} className="flex flex-col items-center gap-2">
+                                        <span className="text-xs font-bold text-slate-500">{stringNames[idx]}</span>
+                                        <button 
+                                            onClick={() => {
+                                                if (isOriginallyMuted) return; // Cannot unmute a string that was originally muted in the base chord
+                                                setProgression(prev => {
+                                                    const newProg = [...prev];
+                                                    const newFrets = [...newProg[editingChordIndex].chord.frets];
+                                                    newFrets[idx] = currentlyMuted ? originalChord?.frets[idx] : 'x';
+                                                    newProg[editingChordIndex] = {
+                                                        ...newProg[editingChordIndex],
+                                                        chord: { ...newProg[editingChordIndex].chord, frets: newFrets }
+                                                    };
+                                                    return newProg;
+                                                });
+                                            }}
+                                            disabled={isOriginallyMuted}
+                                            className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
+                                                isOriginallyMuted ? 'bg-black/20 text-slate-700 border border-white/5 cursor-not-allowed' :
+                                                currentlyMuted ? 'bg-rose-500/20 text-rose-400 border border-rose-500/30 hover:bg-rose-500/30' :
+                                                'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/30'
+                                            }`}
+                                        >
+                                            {currentlyMuted ? 'X' : (progression[editingChordIndex].chord.frets[idx] === 0 ? '0' : progression[editingChordIndex].chord.frets[idx])}
+                                        </button>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                        
+                        <div className="mt-6 flex justify-end">
+                            <button 
+                                onClick={() => setEditingChordIndex(null)}
+                                className="px-6 py-2 bg-primary hover:bg-primary/90 text-black font-bold rounded-lg transition-all"
+                            >
+                                Done
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
