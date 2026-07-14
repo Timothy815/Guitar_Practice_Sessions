@@ -7,6 +7,7 @@ import MidiWriter from 'midi-writer-js';
 import { getAllDiatonicChords } from '../data/musicEngine';
 import type { ScaleFamily, ScaleQuality } from '../data/musicEngine';
 import ChordDiagram from './ChordDiagram';
+import ProgressionTablature from './ProgressionTablature';
 
 interface ChordSandboxViewProps {
     keyName: string;
@@ -865,6 +866,8 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     </div>
                 )}
             </div>
+
+            <ProgressionTablature progression={progression} globalStyle={style} customRhythm={customRhythm} />
 
             {/* Edit Voicing Modal */}
             {editingChordIndex !== null && progression[editingChordIndex] && (
