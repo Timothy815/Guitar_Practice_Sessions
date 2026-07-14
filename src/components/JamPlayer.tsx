@@ -188,16 +188,24 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         const tabMeasures: TabNoteData[][] = [];
         const customJam = customJams.find(j => j.id === progId);
         
-        if (style === 'custom') {
-            const originalBpm = customJam?.bpm || 90;
-            const globalRhythm = customJam?.rhythm;
+        chordMidiArrays.forEach(chordData => {
+            const midiNotes = chordData.midiNotes;
+            const positions = chordData.positions || [];
             
-            chordMidiArrays.forEach((chordData) => {
+            let activeStyle = chordData.styleOverride || style;
+            const isGlobalCustom = style === 'custom';
+            
+            if (isGlobalCustom && !chordData.styleOverride) {
+                activeStyle = 'custom';
+            }
+            
+            if (activeStyle === 'custom' || activeStyle === 'custom_override') {
                 const measure: any[] = [];
                 const tabMeasure: TabNoteData[] = [];
                 let soundingNoteIdx = 0;
                 
-                const activeRhythm = chordData.rhythm || globalRhythm;
+                const originalBpm = customJam?.bpm || 90;
+                const activeRhythm = chordData.rhythm || customJam?.rhythm;
                 
                 let arpAudioSeq: {midi: number[], p: {str: number, fret: string|number}[]}[] | undefined = undefined;
                 if (chordData.arpeggioPattern && chordData.arpeggioPattern.length > 0) {
@@ -272,15 +280,8 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 }
                 measures.push(measure);
                 tabMeasures.push(tabMeasure);
-            });
-            
-            return { measures, tabMeasures };
-        }
-
-        chordMidiArrays.forEach(chordData => {
-            const midiNotes = chordData.midiNotes;
-            const positions = chordData.positions || [];
-            const activeStyle = chordData.styleOverride || style;
+                return;
+            }
             
             if (activeStyle === 'quarters') {
                 measures.push([

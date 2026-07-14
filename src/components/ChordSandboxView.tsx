@@ -481,7 +481,15 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             const midiNotes = getChordMidi(chord.frets);
             
             const secondsPerBeat = 60.0 / bpm;
-            const activeRhythm = item.rhythm || (style === 'custom' ? customRhythm : null);
+            const chordStyleOverride = item.playbackStyle;
+            const isGlobalCustom = style === 'custom';
+            
+            let activeRhythm = item.rhythm;
+            if (!chordStyleOverride && isGlobalCustom) {
+                activeRhythm = activeRhythm || customRhythm;
+            } else if (chordStyleOverride === 'custom_override') {
+                activeRhythm = activeRhythm || customRhythm;
+            }
             
             if (activeRhythm) {
                 if (activeRhythm.length === 0) {
