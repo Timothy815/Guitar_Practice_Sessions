@@ -401,7 +401,8 @@ export function getScaleData(key: string, family: ScaleFamily, quality: ScaleQua
         
         const keyIdx = CHROMATIC.indexOf(key);
         const rootNote = CHROMATIC[(keyIdx + offset) % 12];
-        const qLabel = chord.quality === 'Major' ? '' : chord.quality === 'Minor' ? 'm' : 'dim';
+        const qLabel = chord.quality === 'Major' || chord.quality === '' ? '' : 
+                       chord.quality === 'Minor' || chord.quality === 'm' ? 'm' : 'dim';
         
         return {
             name: `${rootNote}${qLabel} (${chord.numeral})`,
