@@ -118,7 +118,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
 
     const generateMeasures = () => {
         const measures: any[] = [];
-        let chordMidiArrays: { midiNotes: number[], rhythm?: number[], styleOverride?: string, positions?: {str: number, fret: string | number}[], arpeggioPattern?: number[], frets?: (number | string)[] }[] = [];
+        let chordMidiArrays: { midiNotes: number[], rhythm?: number[], styleOverride?: string, positions?: {str: number, fret: string | number}[], arpeggioPattern?: number[][] | number[], frets?: (number | string)[] }[] = [];
         
         if (progId === 'shape') {
             // Use the actual chords mapped to this shape position
@@ -298,19 +298,32 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
             } else if (activeStyle === 'arpeggio') {
                 const notes = midiNotes;
                 const pos = positions;
-                let audioSeq: {midi: number|undefined, p: {str: number, fret: string|number}|undefined}[] = [];
+                let audioSeq: {midi: number[], p: {str: number, fret: string|number}[]}[] = [];
                 
                 if (chordData.arpeggioPattern && chordData.arpeggioPattern.length > 0) {
-                    audioSeq = chordData.arpeggioPattern.map((idx: number) => {
-                        if (idx === -1) return {midi: undefined, p: undefined};
+                    let rawPattern = chordData.arpeggioPattern;
+                    if (typeof rawPattern[0] === 'number') {
+                        rawPattern = (rawPattern as any[]).map(val => val === -1 ? [] : [val]);
+                    }
+                    const pattern = rawPattern as number[][];
+                    
+                    audioSeq = pattern.map(col => {
+                        if (col.length === 0) return {midi: [], p: []};
                         
-                        // idx is 0-5 string index (0=Low E)
-                        const fretVal = chordData.frets ? chordData.frets[idx] : undefined;
-                        if (fretVal === 'x' || fretVal === undefined) return {midi: undefined, p: undefined};
+                        const midiNotesForStep: number[] = [];
+                        const positionsForStep: {str: number, fret: string|number}[] = [];
                         
-                        const strNum = 6 - idx;
-                        const midi = (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
-                        return { midi, p: { str: strNum, fret: fretVal } };
+                        col.forEach(idx => {
+                            const fretVal = chordData.frets ? chordData.frets[idx] : undefined;
+                            if (fretVal === 'x' || fretVal === undefined) return;
+                            
+                            const strNum = 6 - idx;
+                            const midi = (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
+                            midiNotesForStep.push(midi);
+                            positionsForStep.push({ str: strNum, fret: fretVal });
+                        });
+                        
+                        return { midi: midiNotesForStep, p: positionsForStep };
                     });
                 } else {
                     const seq = [
@@ -323,18 +336,21 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         0,
                         Math.min(1, notes.length - 1)
                     ];
-                    audioSeq = seq.map(idx => ({ midi: notes[idx], p: pos[idx] }));
+                    audioSeq = seq.map(idx => ({ 
+                        midi: notes[idx] !== undefined ? [notes[idx]] : [], 
+                        p: pos[idx] !== undefined ? [pos[idx]] : [] 
+                    }));
                 }
                 
                 measures.push(audioSeq.map((item, idx) => ({
-                    midiNotes: item.midi !== undefined ? [item.midi] : [],
+                    midiNotes: item.midi,
                     duration: "8",
                     velocity: idx === 0 ? 1.0 : 0.8
                 })));
                 
                 tabMeasures.push(audioSeq.map(item => ({
-                    duration: item.p === undefined ? "8r" : "8",
-                    positions: item.p !== undefined ? [item.p] : []
+                    duration: item.p.length === 0 ? "8r" : "8",
+                    positions: item.p
                 })));
             } else if (activeStyle === 'funk') {
                 measures.push([

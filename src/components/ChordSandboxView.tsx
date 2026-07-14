@@ -38,7 +38,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         chord: any;
         rhythm?: number[];
         playbackStyle?: string;
-        arpeggioPattern?: number[];
+        arpeggioPattern?: number[][] | number[];
     }
     
     const [progression, setProgression] = useState<ProgressionItem[]>([]);
@@ -564,22 +564,37 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                 } else if (activeStyle === 'arpeggio') {
                     let arpNotes = [midiNotes[0], midiNotes[1], midiNotes[2], midiNotes[3] || midiNotes[2], midiNotes[2], midiNotes[1], midiNotes[0], midiNotes[1]];
                     if (item.arpeggioPattern && item.arpeggioPattern.length > 0) {
-                        arpNotes = item.arpeggioPattern.map(idx => {
-                            if (idx === -1) return undefined;
-                            // Find the midi note that corresponds to this string.
-                            // The `midiNotes` array contains only the valid (unmuted) strings in order from low to high.
-                            // However, `item.arpeggioPattern` contains string indices (0=Low E, 5=High e).
-                            // Let's get the original frets array to map string index to a midi note.
-                            const fretVal = chord.frets[idx];
-                            if (fretVal === 'x' || fretVal === undefined) return undefined;
-                            const strNum = 6 - idx;
-                            return (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
+                        let rawPattern = item.arpeggioPattern;
+                        if (typeof rawPattern[0] === 'number') {
+                            rawPattern = (rawPattern as any[]).map(val => val === -1 ? [] : [val]);
+                        }
+                        const pattern = rawPattern as number[][];
+                        
+                        arpNotes = pattern.map(col => {
+                            if (col.length === 0) return undefined as any;
+                            // Play all selected strings at this step as a chord
+                            const validMidis = col.map(idx => {
+                                const fretVal = chord.frets[idx];
+                                if (fretVal === 'x' || fretVal === undefined) return null;
+                                const strNum = 6 - idx;
+                                return (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
+                            }).filter(m => m !== null) as number[];
+                            
+                            if (validMidis.length === 0) return undefined as any;
+                            // For backward compatibility of arpNotes being number[], we could return array but TS says number. Wait! `arpNotes` is used with `instrumentRef.current?.play` which can take a single note or an array of notes!
+                            // So let's make arpNotes an array of arrays or numbers. Actually, soundfont `.play` might only take single string or number. Let's check below.
+                            return validMidis as any;
                         });
                     }
                     
                     if (currentNoteRef.current < arpNotes.length) {
-                        if (arpNotes[currentNoteRef.current] !== undefined) {
-                            instrumentRef.current?.play(arpNotes[currentNoteRef.current]!.toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+                        const currentStep = arpNotes[currentNoteRef.current];
+                        if (currentStep !== undefined) {
+                            if (Array.isArray(currentStep)) {
+                                currentStep.forEach(m => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 }));
+                            } else {
+                                instrumentRef.current?.play(currentStep.toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+                            }
                         }
                         nextNoteTimeRef.current += secondsPerBeat / 2;
                         currentNoteRef.current++;
@@ -659,33 +674,44 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     { positions: remainingPositions, duration: 'q' },
                 ];
             } else if (itemStyle === 'arpeggio') {
-                let arpPattern = [
-                    allPositions[0], 
-                    allPositions[1], 
-                    allPositions[2], 
-                    allPositions.length > 3 ? allPositions[3] : allPositions[2],
-                    allPositions[2], 
-                    allPositions[1], 
-                    allPositions[0], 
-                    allPositions[1]
-                ];
+                let arpTabSequence: TabNoteData[] = [];
                 
                 if (item.arpeggioPattern && item.arpeggioPattern.length > 0) {
-                    arpPattern = item.arpeggioPattern.map(idx => {
-                        if (idx === -1) return undefined as any;
-                        const fretVal = item.chord.frets[idx];
-                        if (fretVal === 'x' || fretVal === undefined) return undefined as any;
-                        return { str: 6 - idx, fret: fretVal };
+                    let rawPattern = item.arpeggioPattern;
+                    if (typeof rawPattern[0] === 'number') {
+                        rawPattern = (rawPattern as any[]).map(val => val === -1 ? [] : [val]);
+                    }
+                    const pattern = rawPattern as number[][];
+                    
+                    arpTabSequence = pattern.map(col => {
+                        if (col.length === 0) return { duration: '8r', positions: [] };
+                        const validPositions = col.map(idx => {
+                            const fretVal = item.chord.frets[idx];
+                            if (fretVal === 'x' || fretVal === undefined) return null;
+                            return { str: 6 - idx, fret: fretVal };
+                        }).filter(p => p !== null) as {str: number, fret: string|number}[];
+                        
+                        if (validPositions.length === 0) return { duration: '8r', positions: [] };
+                        return { duration: '8', positions: validPositions };
+                    });
+                } else {
+                    let arpPattern = [
+                        allPositions[0], 
+                        allPositions[1], 
+                        allPositions[2], 
+                        allPositions.length > 3 ? allPositions[3] : allPositions[2],
+                        allPositions[2], 
+                        allPositions[1], 
+                        allPositions[0], 
+                        allPositions[1]
+                    ];
+                    arpTabSequence = arpPattern.map(pos => {
+                        if (!pos) return { duration: '8r', positions: [] };
+                        return { positions: [pos], duration: '8' };
                     });
                 }
                 
-                return arpPattern.map(pos => {
-                    if (!pos) return { duration: '8r', positions: [] };
-                    return {
-                        positions: [pos],
-                        duration: '8'
-                    };
-                });
+                return arpTabSequence;
             } else if (itemStyle === 'funk') {
                 return [
                     { positions: allPositions, duration: 'q' },
@@ -1115,40 +1141,93 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
 
                         {progression[editingChordIndex].playbackStyle === 'arpeggio' && (
                             <div className="bg-black/40 p-4 rounded-xl border border-white/5 mb-2 mt-4 animate-in fade-in zoom-in-95 duration-200">
-                                <label className="text-xs text-indigo-300 uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
-                                    Arpeggio Sequence
-                                </label>
-                                <p className="text-xs text-slate-400 mb-4">Click to cycle through strings or rest.</p>
-                                <div className="flex gap-2 justify-between">
-                                    {Array.from({length: 8}).map((_, i) => {
-                                        const pattern = progression[editingChordIndex].arpeggioPattern || [0, 1, 2, 3, 2, 1, 0, 1];
-                                        const val = pattern[i];
-                                        const displayVal = val === -1 ? '-' : ['E', 'A', 'D', 'G', 'B', 'e'][val];
-                                        return (
-                                            <button 
-                                                key={i}
-                                                onClick={() => {
-                                                    const newPattern = [...pattern];
-                                                    let nextVal = val + 1;
-                                                    if (nextVal > 5) nextVal = -1;
-                                                    newPattern[i] = nextVal;
-                                                    setProgression(prev => {
-                                                        const newProg = [...prev];
-                                                        newProg[editingChordIndex] = {
-                                                            ...newProg[editingChordIndex],
-                                                            arpeggioPattern: newPattern
-                                                        };
-                                                        return newProg;
-                                                    });
-                                                }}
-                                                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-colors ${
-                                                    val === -1 ? 'bg-black/40 text-slate-500 border border-white/5' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/40'
-                                                }`}
-                                            >
-                                                {displayVal}
-                                            </button>
-                                        );
-                                    })}
+                                <div className="flex justify-between items-center mb-2">
+                                    <label className="text-xs text-indigo-300 uppercase tracking-wider font-bold flex items-center gap-2">
+                                        Arpeggio Sequencer Grid
+                                    </label>
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => {
+                                                setProgression(prev => {
+                                                    const newProg = [...prev];
+                                                    let currentPattern = newProg[editingChordIndex].arpeggioPattern;
+                                                    // Normalize legacy 1D array to 2D
+                                                    if (currentPattern && typeof currentPattern[0] === 'number') {
+                                                        currentPattern = (currentPattern as any[]).map(val => val === -1 ? [] : [val]);
+                                                    }
+                                                    if (!currentPattern) currentPattern = [[0], [1], [2], [3], [2], [1], [0], [1]];
+                                                    if (currentPattern.length > 1) {
+                                                        newProg[editingChordIndex] = { ...newProg[editingChordIndex], arpeggioPattern: currentPattern.slice(0, -1) as number[][] };
+                                                    }
+                                                    return newProg;
+                                                });
+                                            }}
+                                            className="w-6 h-6 rounded bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700"
+                                        >-</button>
+                                        <button 
+                                            onClick={() => {
+                                                setProgression(prev => {
+                                                    const newProg = [...prev];
+                                                    let currentPattern = newProg[editingChordIndex].arpeggioPattern;
+                                                    // Normalize legacy 1D array to 2D
+                                                    if (currentPattern && typeof currentPattern[0] === 'number') {
+                                                        currentPattern = (currentPattern as any[]).map(val => val === -1 ? [] : [val]);
+                                                    }
+                                                    if (!currentPattern) currentPattern = [[0], [1], [2], [3], [2], [1], [0], [1]];
+                                                    newProg[editingChordIndex] = { ...newProg[editingChordIndex], arpeggioPattern: [...currentPattern, []] as number[][] };
+                                                    return newProg;
+                                                });
+                                            }}
+                                            className="w-6 h-6 rounded bg-slate-800 text-white flex items-center justify-center hover:bg-slate-700"
+                                        >+</button>
+                                    </div>
+                                </div>
+                                <p className="text-xs text-slate-400 mb-4">Toggle strings for each step in the sequence.</p>
+                                
+                                <div className="flex flex-col gap-1 overflow-x-auto pb-2">
+                                    {(() => {
+                                        let rawPattern = progression[editingChordIndex].arpeggioPattern;
+                                        if (rawPattern && typeof rawPattern[0] === 'number') {
+                                            rawPattern = (rawPattern as any[]).map(val => val === -1 ? [] : [val]);
+                                        }
+                                        const pattern = (rawPattern as number[][]) || [[0], [1], [2], [3], [2], [1], [0], [1]];
+                                        
+                                        return ['e', 'B', 'G', 'D', 'A', 'E'].map((strName, strReversedIdx) => {
+                                            const strIdx = 5 - strReversedIdx;
+                                            return (
+                                                <div key={strName} className="flex gap-1 items-center">
+                                                    <div className="text-[10px] text-slate-500 font-bold w-6 text-right mr-2">{strName}</div>
+                                                    {pattern.map((col, colIdx) => {
+                                                        const isSelected = col.includes(strIdx);
+                                                        return (
+                                                            <button 
+                                                                key={`${strName}-${colIdx}`}
+                                                                onClick={() => {
+                                                                    setProgression(prev => {
+                                                                        const newProg = [...prev];
+                                                                        const newPattern = [...pattern];
+                                                                        if (isSelected) {
+                                                                            newPattern[colIdx] = col.filter(x => x !== strIdx);
+                                                                        } else {
+                                                                            newPattern[colIdx] = [...col, strIdx].sort();
+                                                                        }
+                                                                        newProg[editingChordIndex] = {
+                                                                            ...newProg[editingChordIndex],
+                                                                            arpeggioPattern: newPattern as any
+                                                                        };
+                                                                        return newProg;
+                                                                    });
+                                                                }}
+                                                                className={`flex-shrink-0 w-8 h-8 rounded-md transition-colors ${
+                                                                    isSelected ? 'bg-indigo-500 border border-indigo-400 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-slate-800 border border-white/5 hover:bg-slate-700'
+                                                                }`}
+                                                            />
+                                                        );
+                                                    })}
+                                                </div>
+                                            );
+                                        });
+                                    })()}
                                 </div>
                             </div>
                         )}
