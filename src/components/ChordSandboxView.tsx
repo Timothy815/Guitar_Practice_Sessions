@@ -813,12 +813,6 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     <h2 className="text-2xl font-bold text-white mb-2">Chord Progression Sandbox</h2>
                     <p className="text-slate-400">Build and practice custom progressions in <span className="text-primary font-bold">{keyName} {quality} ({family})</span></p>
                 </div>
-                <button 
-                    onClick={onSettingsClick}
-                    className="flex items-center gap-2 px-4 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-slate-300 transition-colors"
-                >
-                    <Settings2 className="w-4 h-4" /> Change Key
-                </button>
             </div>
 
             {/* Chord Palette */}
