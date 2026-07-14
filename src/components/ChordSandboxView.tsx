@@ -27,6 +27,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         id: string;
         chord: any;
         rhythm?: number[];
+        playbackStyle?: string;
     }
     
     const [progression, setProgression] = useState<ProgressionItem[]>([]);
@@ -587,7 +588,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
 
     const generateVexFlowMeasures = (): TabNoteData[][] => {
         return progression.map(item => {
-            const itemStyle = item.rhythm ? 'custom_override' : style;
+            const itemStyle = item.playbackStyle || (item.rhythm ? 'custom_override' : style);
             
             const allPositions: {str: number, fret: string | number}[] = [];
             item.chord.frets.forEach((fret: number | string, i: number) => {
@@ -644,6 +645,32 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     { positions: allPositions, duration: 'q' },
                     { positions: allPositions, duration: 'h' },
                 ];
+            } else if (itemStyle === 'custom_override' || itemStyle === 'custom') {
+                const activeRhythm = item.rhythm || customRhythm;
+                if (!activeRhythm || activeRhythm.length === 0) {
+                    return [ { positions: allPositions, duration: 'w' } ];
+                }
+                
+                const tabMeasure: TabNoteData[] = [];
+                activeRhythm.forEach((rVal: number) => {
+                    const absoluteSeconds = Math.abs(rVal);
+                    const originalBeats = absoluteSeconds / (60.0 / bpm);
+                    const isRest = rVal < 0;
+                    
+                    let durationCode = "q";
+                    if (originalBeats <= 0.25) durationCode = "16";
+                    else if (originalBeats <= 0.5) durationCode = "8";
+                    else if (originalBeats <= 1.0) durationCode = "q";
+                    else if (originalBeats <= 2.0) durationCode = "h";
+                    else durationCode = "w";
+                    
+                    if (isRest) {
+                        tabMeasure.push({ duration: durationCode + "r", positions: [] });
+                    } else {
+                        tabMeasure.push({ duration: durationCode, positions: allPositions });
+                    }
+                });
+                return tabMeasure;
             } else {
                 return [ { positions: allPositions, duration: 'w' } ];
             }
@@ -796,7 +823,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 const payload = {
                                     id: `custom_jam_${Date.now()}`,
                                     name: userInputName || defaultName,
-                                    chords: progression.map(item => ({ numeral: item.chord.numeral, offset: item.chord.offset, q: item.chord.quality, rhythm: item.rhythm })),
+                                    chords: progression.map(item => ({ numeral: item.chord.numeral, offset: item.chord.offset, q: item.chord.quality, rhythm: item.rhythm, frets: item.chord.frets, playbackStyle: item.playbackStyle })),
                                     rhythm: style === 'custom' ? customRhythm : undefined,
                                     bpm: bpm,
                                     style: style
@@ -950,7 +977,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                         </button>
                         
                         <div className="flex items-center justify-between mb-2 mr-10">
-                            <h3 className="text-xl font-bold text-white">Edit Voicing</h3>
+                            <h3 className="text-xl font-bold text-white">Edit Voicing & Style</h3>
                             <button
                                 onClick={() => playChordOnce(progression[editingChordIndex].chord)}
                                 className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg transition-colors font-bold text-sm"
@@ -966,7 +993,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                             <ChordDiagram chord={progression[editingChordIndex].chord} />
                         </div>
 
-                        <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/5">
+                        <div className="flex justify-between items-center bg-black/40 p-4 rounded-xl border border-white/5 mb-6">
                             {[6, 5, 4, 3, 2, 1].map((strNum, idx) => {
                                 // Strings are standard E A D G B E, array is 0-indexed where 0 is 6th string (Low E)
                                 const originalChord = chords.find(c => c.numeral === progression[editingChordIndex].chord.numeral);
@@ -1007,6 +1034,36 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                     </div>
                                 );
                             })}
+                        </div>
+                        <div className="bg-black/40 p-4 rounded-xl border border-white/5 mb-2">
+                            <label className="text-xs text-indigo-300 uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
+                                Playback Style Override
+                            </label>
+                            <select 
+                                value={progression[editingChordIndex].playbackStyle || 'global'}
+                                onChange={(e) => {
+                                    const val = e.target.value;
+                                    setProgression(prev => {
+                                        const newProg = [...prev];
+                                        newProg[editingChordIndex] = {
+                                            ...newProg[editingChordIndex],
+                                            playbackStyle: val === 'global' ? undefined : val
+                                        };
+                                        return newProg;
+                                    });
+                                }}
+                                className="w-full bg-slate-800 border border-white/10 text-white rounded-lg px-4 py-2 focus:outline-none focus:border-primary transition-colors cursor-pointer"
+                            >
+                                <option value="global">Use Global Style ({style})</option>
+                                <option value="folk">Folk</option>
+                                <option value="rock">Rock</option>
+                                <option value="waltz">Waltz</option>
+                                <option value="arpeggio">Arpeggio Sequencer</option>
+                                <option value="funk">Funk</option>
+                            </select>
+                            <p className="text-xs text-slate-500 mt-2">
+                                This allows you to apply a specific pattern (like an Arpeggio) to just this chord, and saves to Jam Tracks!
+                            </p>
                         </div>
                         
                         <div className="mt-6 flex justify-end">

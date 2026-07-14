@@ -1,6 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Square, Settings2, Music, Trash2 } from 'lucide-react';
 import Soundfont from 'soundfont-player';
+import VexFlowTab from './VexFlowTab';
+import type { TabNoteData } from '../data/routines';
 
 interface JamPlayerProps {
     shapeData: any;
@@ -116,11 +118,11 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
 
     const generateMeasures = () => {
         const measures: any[] = [];
-        let chordMidiArrays: { midiNotes: number[], rhythm?: number[] }[] = [];
+        let chordMidiArrays: { midiNotes: number[], rhythm?: number[], styleOverride?: string, positions?: {str: number, fret: string | number}[] }[] = [];
         
         if (progId === 'shape') {
             // Use the actual chords mapped to this shape position
-            if (!shapeData.actualChords || shapeData.actualChords.length === 0) return [];
+            if (!shapeData.actualChords || shapeData.actualChords.length === 0) return { measures: [], tabMeasures: [] };
             
             chordMidiArrays = shapeData.actualChords.map((chord: any) => {
                 const notes: number[] = [];
@@ -132,7 +134,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         notes.push(midi);
                     }
                 }
-                return { midiNotes: notes };
+                return { midiNotes: notes, positions: notes.map((_n, i) => ({ str: 6 - i, fret: 0 })) };
             });
             
             // Loop short progressions to make 4 bars
@@ -148,19 +150,42 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 const keyRoot = shapeData.key;
                 chordMidiArrays = customJam.chords.map((c: any) => {
                     const chordRoot = getNoteByOffset(keyRoot, c.offset);
-                    return { midiNotes: getChordMidi(chordRoot, c.q), rhythm: c.rhythm };
+                    const notes: number[] = [];
+                    const positions: {str: number, fret: string | number}[] = [];
+                    
+                    if (c.frets) {
+                        for (let strIdx = 0; strIdx < 6; strIdx++) {
+                            const fretVal = c.frets[strIdx];
+                            if (fretVal !== 'x') {
+                                const strNum = 6 - strIdx;
+                                const midi = (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
+                                notes.push(midi);
+                                positions.push({ str: strNum, fret: fretVal });
+                            }
+                        }
+                    } else {
+                        notes.push(...getChordMidi(chordRoot, c.q));
+                        // basic fallback positions for standard chords if frets absent
+                        notes.forEach((_midi, i) => {
+                            positions.push({ str: 6 - i, fret: 0 }); // fake tab for legacy
+                        });
+                    }
+                    return { midiNotes: notes, rhythm: c.rhythm, styleOverride: c.playbackStyle, positions };
                 });
             }
         } else {
             const prog = availableProgressions.find(p => p.id === progId);
-            if (!prog) return [];
+            if (!prog) return { measures: [], tabMeasures: [] };
             const keyRoot = shapeData.key;
             chordMidiArrays = prog.chords.map(c => {
                 const chordRoot = getNoteByOffset(keyRoot, c.offset);
-                return { midiNotes: getChordMidi(chordRoot, c.q) };
+                const notes = getChordMidi(chordRoot, c.q);
+                const positions = notes.map((_n, i) => ({ str: 6 - i, fret: 0 }));
+                return { midiNotes: notes, positions };
             });
         }
 
+        const tabMeasures: TabNoteData[][] = [];
         const customJam = customJams.find(j => j.id === progId);
         
         if (style === 'custom') {
@@ -169,6 +194,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
             
             chordMidiArrays.forEach((chordData) => {
                 const measure: any[] = [];
+                const tabMeasure: TabNoteData[] = [];
                 let soundingNoteIdx = 0;
                 
                 const activeRhythm = chordData.rhythm || globalRhythm;
@@ -187,27 +213,48 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                             isRest: isRest
                         });
                         
+                        let durationCode = "q";
+                        if (originalBeats <= 0.25) durationCode = "16";
+                        else if (originalBeats <= 0.5) durationCode = "8";
+                        else if (originalBeats <= 1.0) durationCode = "q";
+                        else if (originalBeats <= 2.0) durationCode = "h";
+                        else durationCode = "w";
+                        
+                        if (isRest) {
+                            tabMeasure.push({ duration: durationCode + "r", positions: [] });
+                        } else {
+                            tabMeasure.push({ duration: durationCode, positions: chordData.positions || [] });
+                        }
+                        
                         if (!isRest) soundingNoteIdx++;
                     });
                 } else {
                     measure.push({ midiNotes: chordData.midiNotes, duration: "1n", velocity: 0.9 });
+                    tabMeasure.push({ duration: "w", positions: chordData.positions || [] });
                 }
                 measures.push(measure);
+                tabMeasures.push(tabMeasure);
             });
             
-            return measures;
+            return { measures, tabMeasures };
         }
 
         chordMidiArrays.forEach(chordData => {
             const midiNotes = chordData.midiNotes;
-            if (style === 'quarters') {
+            const positions = chordData.positions || [];
+            const activeStyle = chordData.styleOverride || style;
+            
+            if (activeStyle === 'quarters') {
                 measures.push([
                     { midiNotes, duration: "q", velocity: 1.0 },
                     { midiNotes, duration: "q", velocity: 0.8 },
                     { midiNotes, duration: "q", velocity: 0.9 },
                     { midiNotes, duration: "q", velocity: 0.8 }
                 ]);
-            } else if (style === 'folk') {
+                tabMeasures.push([
+                    { duration: "q", positions }, { duration: "q", positions }, { duration: "q", positions }, { duration: "q", positions }
+                ]);
+            } else if (activeStyle === 'folk') {
                 measures.push([
                     { midiNotes, duration: "q", velocity: 1.0 },
                     { midiNotes, duration: "8", velocity: 0.9 },
@@ -216,14 +263,22 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                     { midiNotes, duration: "8", velocity: 0.9 },
                     { midiNotes, duration: "8", velocity: 0.7 },
                 ]);
-            } else if (style === 'upbeats') {
+                tabMeasures.push([
+                    { duration: "q", positions }, { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "q", positions }, { duration: "8", positions }, { duration: "8", positions }
+                ]);
+            } else if (activeStyle === 'upbeats') {
                 measures.push([
                     { midiNotes: [], duration: "q", velocity: 0 },
                     { midiNotes, duration: "q", velocity: 0.9 },
                     { midiNotes: [], duration: "q", velocity: 0 },
                     { midiNotes, duration: "q", velocity: 0.9 }
                 ]);
-            } else if (style === 'shuffle') {
+                tabMeasures.push([
+                    { duration: "qr", positions: [] }, { duration: "q", positions },
+                    { duration: "qr", positions: [] }, { duration: "q", positions }
+                ]);
+            } else if (activeStyle === 'shuffle') {
                 measures.push([
                     { midiNotes, duration: "qt", velocity: 1.0 },
                     { midiNotes, duration: "8t", velocity: 0.7 },
@@ -234,13 +289,62 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                     { midiNotes, duration: "qt", velocity: 0.9 },
                     { midiNotes, duration: "8t", velocity: 0.7 }
                 ]);
+                tabMeasures.push([
+                    { duration: "8", positions }, { duration: "8", positions }, // Approximating shuffle for tab display
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions }
+                ]);
+            } else if (activeStyle === 'arpeggio') {
+                const notes = midiNotes;
+                const pos = positions;
+                // Basic 8th note arpeggio picking pattern
+                const seq = [
+                    0, 
+                    Math.min(1, notes.length - 1), 
+                    Math.min(2, notes.length - 1), 
+                    Math.min(3, notes.length - 1), 
+                    Math.min(2, notes.length - 1), 
+                    Math.min(1, notes.length - 1),
+                    0,
+                    Math.min(1, notes.length - 1)
+                ];
+                
+                measures.push(seq.map(idx => ({
+                    midiNotes: notes[idx] ? [notes[idx]] : [],
+                    duration: "8",
+                    velocity: idx === 0 ? 1.0 : 0.8
+                })));
+                
+                tabMeasures.push(seq.map(idx => ({
+                    duration: "8",
+                    positions: pos[idx] ? [pos[idx]] : []
+                })));
+            } else if (activeStyle === 'funk') {
+                measures.push([
+                    { midiNotes, duration: "16", velocity: 1.0 },
+                    { midiNotes, duration: "16", velocity: 0.8 },
+                    { midiNotes: [], duration: "8", velocity: 0 },
+                    { midiNotes, duration: "16", velocity: 0.9 },
+                    { midiNotes, duration: "16", velocity: 0.8 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes: [], duration: "q", velocity: 0 },
+                ]);
+                tabMeasures.push([
+                    { duration: "16", positions }, { duration: "16", positions }, { duration: "8r", positions: [] },
+                    { duration: "16", positions }, { duration: "16", positions }, { duration: "8", positions },
+                    { duration: "qr", positions: [] }
+                ]);
+            } else {
+                measures.push([{ midiNotes, duration: "q", velocity: 1.0 }, { midiNotes, duration: "q", velocity: 0.8 }, { midiNotes, duration: "q", velocity: 0.9 }, { midiNotes, duration: "q", velocity: 0.8 }]);
+                tabMeasures.push([{ duration: "q", positions }, { duration: "q", positions }, { duration: "q", positions }, { duration: "q", positions }]);
             }
         });
         
-        return measures;
+        return { measures, tabMeasures };
     };
 
-    const measures = generateMeasures();
+    const { measures, tabMeasures } = generateMeasures();
 
     const scheduleNote = (measureIdx: number, noteIdx: number, time: number): number => {
         if (!audioCtxRef.current) return 0;
@@ -504,6 +608,13 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                     </select>
                 </div>
             </div>
+            
+            {progId.startsWith('custom_jam_') && tabMeasures.length > 0 && (
+                <div className="mt-8 bg-slate-900 border border-white/10 rounded-2xl p-6 print:border-none print:p-0 print:bg-white w-full">
+                    <h3 className="text-xl font-bold text-white mb-6 print:text-black print:border-b-2 print:border-black print:pb-2">Jam Track Tablature</h3>
+                    <VexFlowTab measures={tabMeasures} />
+                </div>
+            )}
         </div>
     );
 }

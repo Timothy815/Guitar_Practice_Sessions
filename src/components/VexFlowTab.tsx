@@ -34,8 +34,8 @@ export default function VexFlowTab({ measures }: VexFlowTabProps) {
         lines.forEach((lineMeasures, lineIndex) => {
             const currentY = 20 + (lineIndex * rowHeight);
             
-            // Stretch measures in this line so the line is always full width
-            const currentMeasureWidth = MAX_WIDTH / lineMeasures.length;
+            // Use standard width for all measures so incomplete lines don't stretch
+            const currentMeasureWidth = MAX_WIDTH / TARGET_MEASURES_PER_LINE;
             
             let currentX = 10;
             
