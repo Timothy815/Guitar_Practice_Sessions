@@ -26,11 +26,16 @@ interface ProgDef { id: string; name: string; chords: ChordDef[] }
 
 const MAJOR_PROGRESSIONS: ProgDef[] = [
     { id: "maj_pop_punk", name: "Pop Punk (I - V - vi - IV)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }, { numeral: 'vi', offset: 9, q: 'Minor' }, { numeral: 'IV', offset: 5, q: 'Major' }] },
+    { id: "maj_modern_pop", name: "Modern Pop (vi - IV - I - V)", chords: [{ numeral: 'vi', offset: 9, q: 'Minor' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }] },
     { id: "maj_50s", name: "50s Ballad (I - vi - IV - V)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'vi', offset: 9, q: 'Minor' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }] },
     { id: "maj_classic", name: "Classic Rock (I - bVII - IV - I)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'bVII', offset: 10, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }] },
+    { id: "maj_southern", name: "Southern Rock (V - IV - I - I)", chords: [{ numeral: 'V', offset: 7, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }] },
     { id: "maj_jazz", name: "Jazz/R&B (ii - V - I)", chords: [{ numeral: 'ii', offset: 2, q: 'Minor' }, { numeral: 'V', offset: 7, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }] },
+    { id: "maj_soul", name: "Soul Ballad (I - iii - IV - V)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'iii', offset: 4, q: 'Minor' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }] },
     { id: "maj_standard", name: "Pop Standard (I - IV - vi - V)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'vi', offset: 9, q: 'Minor' }, { numeral: 'V', offset: 7, q: 'Major' }] },
-    { id: "maj_folk", name: "Folk Vamp (I - I - IV - V)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }] }
+    { id: "maj_folk", name: "Folk Vamp (I - I - IV - V)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }] },
+    { id: "maj_reggae", name: "Reggae Skank (I - ii - I - ii)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'ii', offset: 2, q: 'Minor' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'ii', offset: 2, q: 'Minor' }] },
+    { id: "maj_funk", name: "Two-Chord Funk (I - IV)", chords: [{ numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'I', offset: 0, q: 'Major' }, { numeral: 'IV', offset: 5, q: 'Major' }] }
 ];
 
 const MINOR_PROGRESSIONS: ProgDef[] = [
@@ -38,8 +43,11 @@ const MINOR_PROGRESSIONS: ProgDef[] = [
     { id: "min_andalusian", name: "Andalusian (i - bVII - bVI - V)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'VII', offset: 10, q: 'Major' }, { numeral: 'VI', offset: 8, q: 'Major' }, { numeral: 'V', offset: 7, q: 'Major' }] },
     { id: "min_blues", name: "Blues Minor (i - iv - v - i)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'iv', offset: 5, q: 'Minor' }, { numeral: 'v', offset: 7, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' }] },
     { id: "min_darkpop", name: "Dark Pop (i - VI - III - VII)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'VI', offset: 8, q: 'Major' }, { numeral: 'III', offset: 3, q: 'Major' }, { numeral: 'VII', offset: 10, q: 'Major' }] },
+    { id: "min_smooth", name: "Smooth Minor (i - iv - VII - III)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'iv', offset: 5, q: 'Minor' }, { numeral: 'VII', offset: 10, q: 'Major' }, { numeral: 'III', offset: 3, q: 'Major' }] },
     { id: "min_jazz", name: "Jazz Minor (ii - V - i)", chords: [{ numeral: 'ii', offset: 2, q: 'Minor' }, { numeral: 'V', offset: 7, q: 'Major' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'i', offset: 0, q: 'Minor' }] },
-    { id: "min_moody", name: "Moody Vamp (i - v - VI - v)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'v', offset: 7, q: 'Minor' }, { numeral: 'VI', offset: 8, q: 'Major' }, { numeral: 'v', offset: 7, q: 'Minor' }] }
+    { id: "min_moody", name: "Moody Vamp (i - v - VI - v)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'v', offset: 7, q: 'Minor' }, { numeral: 'VI', offset: 8, q: 'Major' }, { numeral: 'v', offset: 7, q: 'Minor' }] },
+    { id: "min_dorian", name: "Dorian Funk (i - IV - i - IV)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'IV', offset: 5, q: 'Major' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'IV', offset: 5, q: 'Major' }] },
+    { id: "min_phrygian", name: "Phrygian Metal (i - bII - i - bII)", chords: [{ numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'bII', offset: 1, q: 'Major' }, { numeral: 'i', offset: 0, q: 'Minor' }, { numeral: 'bII', offset: 1, q: 'Major' }] }
 ];
 
 const MAJOR_BLUES_PROGRESSIONS: ProgDef[] = [
