@@ -875,7 +875,17 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                             <X className="w-5 h-5" />
                         </button>
                         
-                        <h3 className="text-xl font-bold text-white mb-2">Edit Voicing</h3>
+                        <div className="flex items-center justify-between mb-2 mr-10">
+                            <h3 className="text-xl font-bold text-white">Edit Voicing</h3>
+                            <button
+                                onClick={() => playChordOnce(progression[editingChordIndex].chord)}
+                                className="flex items-center gap-1.5 px-3 py-1.5 bg-indigo-500/20 text-indigo-400 hover:bg-indigo-500/30 rounded-lg transition-colors font-bold text-sm"
+                                title="Play Current Voicing"
+                            >
+                                <Play className="w-4 h-4 fill-current" />
+                                Play
+                            </button>
+                        </div>
                         <p className="text-slate-400 text-sm mb-6">Click on a string below to toggle muting (X) for this chord in your progression.</p>
                         
                         <div className="flex justify-center mb-8">
@@ -896,16 +906,20 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                         <button 
                                             onClick={() => {
                                                 if (isOriginallyMuted) return; // Cannot unmute a string that was originally muted in the base chord
+                                                const newFrets = [...progression[editingChordIndex].chord.frets];
+                                                newFrets[idx] = currentlyMuted ? originalChord?.frets[idx] : 'x';
+                                                const updatedChord = { ...progression[editingChordIndex].chord, frets: newFrets };
+                                                
                                                 setProgression(prev => {
                                                     const newProg = [...prev];
-                                                    const newFrets = [...newProg[editingChordIndex].chord.frets];
-                                                    newFrets[idx] = currentlyMuted ? originalChord?.frets[idx] : 'x';
                                                     newProg[editingChordIndex] = {
                                                         ...newProg[editingChordIndex],
-                                                        chord: { ...newProg[editingChordIndex].chord, frets: newFrets }
+                                                        chord: updatedChord
                                                     };
                                                     return newProg;
                                                 });
+                                                
+                                                playChordOnce(updatedChord);
                                             }}
                                             disabled={isOriginallyMuted}
                                             className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
