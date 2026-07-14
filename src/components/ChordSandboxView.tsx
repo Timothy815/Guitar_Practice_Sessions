@@ -365,7 +365,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         const t = audioCtxRef.current.currentTime;
         
         midiNotes.forEach((midi, i) => {
-            instrumentRef.current?.play(midi.toString(), t + (i * 0.03), { duration: 8, gain: 0.8 });
+            if (midi !== undefined) instrumentRef.current?.play(midi.toString(), t + (i * 0.03), { duration: 8, gain: 0.8 });
         });
     };
 
@@ -515,13 +515,13 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                 }
             } else if (style === 'rock') {
                 if (currentNoteRef.current === 0) {
-                    instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
-                    instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                    if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                    if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
                     nextNoteTimeRef.current += secondsPerBeat;
                     currentNoteRef.current = 1;
                 } else if (currentNoteRef.current === 1) {
-                    instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
-                    instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
+                    if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
+                    if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
                     nextNoteTimeRef.current += secondsPerBeat;
                     currentNoteRef.current = 2;
                 } else if (currentNoteRef.current === 2) {
@@ -532,7 +532,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                 }
             } else if (style === 'waltz') {
                 if (currentNoteRef.current === 0) {
-                    instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                    if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
                     nextNoteTimeRef.current += secondsPerBeat;
                     currentNoteRef.current = 1;
                 } else if (currentNoteRef.current === 1) {
@@ -548,7 +548,9 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             } else if (style === 'arpeggio') {
                 const arpNotes = [midiNotes[0], midiNotes[1], midiNotes[2], midiNotes[3] || midiNotes[2], midiNotes[2], midiNotes[1], midiNotes[0], midiNotes[1]];
                 if (currentNoteRef.current < 8) {
-                    instrumentRef.current?.play(arpNotes[currentNoteRef.current].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+                    if (arpNotes[currentNoteRef.current] !== undefined) {
+                        instrumentRef.current?.play(arpNotes[currentNoteRef.current].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+                    }
                     nextNoteTimeRef.current += secondsPerBeat / 2;
                     currentNoteRef.current++;
                 } else {
