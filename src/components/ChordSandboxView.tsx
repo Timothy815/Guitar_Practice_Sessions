@@ -22,6 +22,16 @@ const ROOT_MIDI: Record<string, number> = {
     'Bb': 46, 'B': 47, 'C': 48, 'C#': 49, 'D': 50, 'Eb': 51
 };
 
+
+const STRING_MIDI_BASE = {
+    6: 40, // E2
+    5: 45, // A2
+    4: 50, // D3
+    3: 55, // G3
+    2: 59, // B3
+    1: 64  // E4
+};
+
 export default function ChordSandboxView({ keyName, quality, family, onSettingsClick }: ChordSandboxViewProps) {
     interface ProgressionItem {
         id: string;

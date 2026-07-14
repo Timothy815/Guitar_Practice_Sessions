@@ -118,7 +118,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
 
     const generateMeasures = () => {
         const measures: any[] = [];
-        let chordMidiArrays: { midiNotes: number[], rhythm?: number[], styleOverride?: string, positions?: {str: number, fret: string | number}[] }[] = [];
+        let chordMidiArrays: { midiNotes: number[], rhythm?: number[], styleOverride?: string, positions?: {str: number, fret: string | number}[], arpeggioPattern?: number[], frets?: (number | string)[] }[] = [];
         
         if (progId === 'shape') {
             // Use the actual chords mapped to this shape position
