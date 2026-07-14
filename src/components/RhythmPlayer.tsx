@@ -90,11 +90,11 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 
                 const midi = (STRING_MIDI_BASE[pos.str as keyof typeof STRING_MIDI_BASE] || 40) + fretNum;
                 
-                let gain = 1.0;
+                let gain = 1.5;
                 let attackTime = time;
                 
                 if (noteData.articulation === 'hammer' || noteData.articulation === 'pull') {
-                    gain = 0.6; // Softer attack for legato
+                    gain = 0.9; // Softer attack for legato
                 }
                 
                 if (noteData.articulation === 'slide' && lastNoteRef.current && lastNoteRef.current.str === pos.str) {
@@ -163,18 +163,10 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         if (!instrumentRef.current) {
             setIsLoading(true);
             try {
-                const reverb = new Tone.Reverb(1.5);
-                const vol = new Tone.Volume(6); // Boost acoustic guitar volume
-                vol.chain(reverb, Tone.Destination);
-                await reverb.generate(); // Pre-calculate reverb
-                
                 const ac = Tone.getContext().rawContext;
-                const rawGain = ac.createGain();
-                Tone.connect(rawGain, vol);
                 
-                instrumentRef.current = await Soundfont.instrument(ac as any, 'acoustic_guitar_steel', {
-                    destination: rawGain as any
-                });
+                instrumentRef.current = await Soundfont.instrument(ac as any, 'acoustic_guitar_steel');
+                (instrumentRef.current as any).out.gain.value = 8.0; // Huge boost for the acoustic guitar samples
                 
                 clickSynthRef.current = new Tone.Synth({
                     oscillator: { type: "square" },

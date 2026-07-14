@@ -646,18 +646,9 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         if (!instrumentRef.current) {
             setIsLoading(true);
             try {
-                const reverb = new Tone.Reverb(1.5);
-                const vol = new Tone.Volume(6); // Boost acoustic guitar volume
-                vol.chain(reverb, Tone.Destination);
-                await reverb.generate();
-                
                 const ac = Tone.getContext().rawContext;
-                const rawGain = ac.createGain();
-                Tone.connect(rawGain, vol);
-                
-                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'acoustic_guitar_steel', {
-                    destination: rawGain as any
-                });
+                instrumentRef.current = await Soundfont.instrument(ac as any, 'acoustic_guitar_steel');
+                (instrumentRef.current as any).out.gain.value = 8.0; // Huge boost for the acoustic guitar samples
             } catch (error) {
                 console.error("Failed to load soundfont", error);
             }
