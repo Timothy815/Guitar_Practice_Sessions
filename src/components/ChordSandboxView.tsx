@@ -1088,7 +1088,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             {/* Edit Voicing Modal */}
             {editingChordIndex !== null && progression[editingChordIndex] && (
                 <div className="fixed inset-0 bg-black/80 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-                    <div className="bg-slate-900 border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl relative">
+                    <div className="bg-slate-900 border border-white/10 p-6 rounded-2xl w-full max-w-md shadow-2xl relative max-h-[90vh] overflow-y-auto">
                         <button 
                             onClick={() => setEditingChordIndex(null)}
                             className="absolute top-4 right-4 p-2 text-slate-400 hover:text-white hover:bg-white/10 rounded-full transition-colors"
