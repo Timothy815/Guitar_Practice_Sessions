@@ -551,15 +551,64 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             title: "7. Controlled improvisation",
             duration: 300,
             description: `Improvise over a backing track in ${key} ${quality} using ONLY ${shape.name}. Do not noodle endlessly. Apply strict constraints to force creativity.`,
-            focusPoints: [
-                "Round 1: Play only 3 notes total. Create interest with rhythm and rests.",
-                "Round 2: Play only on the B string (think horizontally).",
-                "Round 3: Call and Response (play a phrase, then play an 'answer' phrase)."
-            ],
+            focusPoints: getDailyImprovConstraints(dayOfWeek),
             // Use the top 3 strings for improv lick example
             vexflowMeasures: chunkIntoMeasures(allNotesDesc.filter(n => n.str <= 3).slice(0, 8))
         }
     ];
 
     return { routine, shapeData: shape };
+}
+
+function getDailyImprovConstraints(dayOfWeek: string): string[] {
+    switch (dayOfWeek) {
+        case "Monday":
+            return [
+                "Round 1: Rhythmic constraint. Play ONLY off-beats (syncopation).",
+                "Round 2: Repetition. Take a 3-note motif and repeat it exactly at least 4 times before changing.",
+                "Round 3: Call and Response. Play a phrase, then play a direct 'answer'."
+            ];
+        case "Tuesday":
+            return [
+                "Round 1: String constraint. Play your entire solo using ONLY the G and B strings.",
+                "Round 2: Wide intervals. Try to avoid playing adjacent notes in the scale.",
+                "Round 3: Dynamic extreme. Play as quietly as possible, then build to a loud climax."
+            ];
+        case "Wednesday":
+            return [
+                "Round 1: Note limit. Play a maximum of 4 notes per measure. Use space.",
+                "Round 2: Targeting. Try to end every phrase on the root note of the chord progression.",
+                "Round 3: Emotional projection. Play aggressive and angular, then suddenly switch to smooth and melodic."
+            ];
+        case "Thursday":
+            return [
+                "Round 1: Position shifting. Force yourself to slide in and out of the shape constantly.",
+                "Round 2: Double stops. Incorporate two notes simultaneously into your phrases.",
+                "Round 3: Bending limits. Try to bend every note that can be musically bent."
+            ];
+        case "Friday":
+            return [
+                "Round 1: Rhythmic displacement. Take a simple lick and start it on beat 2, then on beat 4.",
+                "Round 2: Legato focus. Pick as little as possible using hammers and pulls.",
+                "Round 3: Tension and Release. Lean into the 'wrong' sounding notes before resolving cleanly."
+            ];
+        case "Saturday":
+            return [
+                "Round 1: Chord tone soloing. Try to outline the chord progression just with single notes.",
+                "Round 2: String skipping. Force wide interval leaps by skipping strings.",
+                "Round 3: Speed bursts. Play mostly slow, but add sudden fast 16th note runs."
+            ];
+        case "Sunday":
+            return [
+                "Round 1: Silence is golden. Wait at least 4 full beats before playing your next phrase.",
+                "Round 2: Theme development. Play a motif, then play it again slightly altered.",
+                "Round 3: Free expression! Use everything you practiced this week with no limits."
+            ];
+        default:
+            return [
+                "Round 1: Play only 3 notes total. Create interest with rhythm and rests.",
+                "Round 2: Play only on the B string (think horizontally).",
+                "Round 3: Call and Response (play a phrase, then play an 'answer' phrase)."
+            ];
+    }
 }
