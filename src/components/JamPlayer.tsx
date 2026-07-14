@@ -139,6 +139,12 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         if (progId.startsWith('custom_jam_')) {
             const customJam = customJams.find(j => j.id === progId);
             if (customJam && customJam.style === 'raw_midi' && customJam.rawSteps) {
+                const originalOffset = (ROOT_MIDI as any)[customJam.originalKey || 'C'] || 48;
+                const targetOffset = (ROOT_MIDI as any)[shapeData.key] || 48;
+                let semitoneShift = targetOffset - originalOffset;
+                if (semitoneShift > 6) semitoneShift -= 12;
+                if (semitoneShift < -5) semitoneShift += 12;
+
                 const rawMeasures: any[][] = [];
                 const tabMeasures: TabNoteData[][] = [];
                 let currentMeasure: any[] = [];
@@ -146,15 +152,17 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 let currentBeats = 0;
                 
                 customJam.rawSteps.forEach((step: any) => {
+                    const shiftedMidiNotes = step.midiNotes.map((n: number) => n + semitoneShift);
+                    
                     currentMeasure.push({
-                        midiNotes: step.midiNotes,
+                        midiNotes: shiftedMidiNotes,
                         duration: 'custom',
                         absoluteBeatValue: step.absoluteBeatValue,
                         velocity: step.velocity,
                         isRest: step.midiNotes.length === 0
                     });
                     
-                    const positions = step.midiNotes.map((m: number) => {
+                    const positions = shiftedMidiNotes.map((m: number) => {
                         const str = m >= 64 ? 1 : m >= 59 ? 2 : m >= 55 ? 3 : m >= 50 ? 4 : m >= 45 ? 5 : 6;
                         const baseMidi = str === 1 ? 64 : str === 2 ? 59 : str === 3 ? 55 : str === 4 ? 50 : str === 5 ? 45 : 40;
                         return { str, fret: Math.max(0, m - baseMidi) };
@@ -686,11 +694,19 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 });
             }
             
+            let originalKey = window.prompt("What key is this MIDI file originally written in? (e.g. C, A, F#)\nWe will use this to automatically transpose the track when you change practice keys.", shapeData.key);
+            if (originalKey === null) return;
+            originalKey = originalKey.trim().charAt(0).toUpperCase() + originalKey.trim().slice(1);
+            if (!(ROOT_MIDI as any)[originalKey]) {
+                originalKey = 'C';
+            }
+
             const newJam = {
                 id: `custom_jam_${Date.now()}`,
                 name: file.name.replace('.mid', '').replace('.midi', ''),
                 style: 'raw_midi',
                 bpm: Math.round(originalBpm),
+                originalKey: originalKey,
                 rawSteps: steps
             };
             
