@@ -28,6 +28,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         chord: any;
         rhythm?: number[];
         playbackStyle?: string;
+        arpeggioPattern?: number[];
     }
     
     const [progression, setProgression] = useState<ProgressionItem[]>([]);
@@ -501,80 +502,104 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                         currentMeasureRef.current++;
                     }
                 }
-            } else if (style === 'folk') {
-                if (currentNoteRef.current === 0) {
-                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat * 2, gain: 0.8 }));
-                    nextNoteTimeRef.current += secondsPerBeat * 2;
-                    currentNoteRef.current = 1;
-                } else if (currentNoteRef.current === 1) {
-                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
-                    nextNoteTimeRef.current += secondsPerBeat;
-                    currentNoteRef.current = 2;
-                } else if (currentNoteRef.current === 2) {
-                    [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
-                    nextNoteTimeRef.current += secondsPerBeat;
-                    currentNoteRef.current = 0;
-                    currentMeasureRef.current++;
-                }
-            } else if (style === 'rock') {
-                if (currentNoteRef.current === 0) {
-                    if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
-                    if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
-                    nextNoteTimeRef.current += secondsPerBeat;
-                    currentNoteRef.current = 1;
-                } else if (currentNoteRef.current === 1) {
-                    if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
-                    if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
-                    nextNoteTimeRef.current += secondsPerBeat;
-                    currentNoteRef.current = 2;
-                } else if (currentNoteRef.current === 2) {
-                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: secondsPerBeat * 2, gain: 0.8 }));
-                    nextNoteTimeRef.current += secondsPerBeat * 2;
-                    currentNoteRef.current = 0;
-                    currentMeasureRef.current++;
-                }
-            } else if (style === 'waltz') {
-                if (currentNoteRef.current === 0) {
-                    if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
-                    nextNoteTimeRef.current += secondsPerBeat;
-                    currentNoteRef.current = 1;
-                } else if (currentNoteRef.current === 1) {
-                    midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
-                    nextNoteTimeRef.current += secondsPerBeat;
-                    currentNoteRef.current = 2;
-                } else if (currentNoteRef.current === 2) {
-                    midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
-                    nextNoteTimeRef.current += secondsPerBeat;
-                    currentNoteRef.current = 0;
-                    currentMeasureRef.current++;
-                }
-            } else if (style === 'arpeggio') {
-                const arpNotes = [midiNotes[0], midiNotes[1], midiNotes[2], midiNotes[3] || midiNotes[2], midiNotes[2], midiNotes[1], midiNotes[0], midiNotes[1]];
-                if (currentNoteRef.current < 8) {
-                    if (arpNotes[currentNoteRef.current] !== undefined) {
-                        instrumentRef.current?.play(arpNotes[currentNoteRef.current].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+            } else {
+                const activeStyle = item.playbackStyle || style;
+                if (activeStyle === 'folk') {
+                    if (currentNoteRef.current === 0) {
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat * 2, gain: 0.8 }));
+                        nextNoteTimeRef.current += secondsPerBeat * 2;
+                        currentNoteRef.current = 1;
+                    } else if (currentNoteRef.current === 1) {
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
+                        nextNoteTimeRef.current += secondsPerBeat;
+                        currentNoteRef.current = 2;
+                    } else if (currentNoteRef.current === 2) {
+                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
+                        nextNoteTimeRef.current += secondsPerBeat;
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
                     }
-                    nextNoteTimeRef.current += secondsPerBeat / 2;
-                    currentNoteRef.current++;
+                } else if (activeStyle === 'rock') {
+                    if (currentNoteRef.current === 0) {
+                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                        if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                        nextNoteTimeRef.current += secondsPerBeat;
+                        currentNoteRef.current = 1;
+                    } else if (currentNoteRef.current === 1) {
+                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
+                        if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
+                        nextNoteTimeRef.current += secondsPerBeat;
+                        currentNoteRef.current = 2;
+                    } else if (currentNoteRef.current === 2) {
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: secondsPerBeat * 2, gain: 0.8 }));
+                        nextNoteTimeRef.current += secondsPerBeat * 2;
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
+                    }
+                } else if (activeStyle === 'waltz') {
+                    if (currentNoteRef.current === 0) {
+                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                        nextNoteTimeRef.current += secondsPerBeat;
+                        currentNoteRef.current = 1;
+                    } else if (currentNoteRef.current === 1) {
+                        midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
+                        nextNoteTimeRef.current += secondsPerBeat;
+                        currentNoteRef.current = 2;
+                    } else if (currentNoteRef.current === 2) {
+                        midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
+                        nextNoteTimeRef.current += secondsPerBeat;
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
+                    }
+                } else if (activeStyle === 'arpeggio') {
+                    let arpNotes = [midiNotes[0], midiNotes[1], midiNotes[2], midiNotes[3] || midiNotes[2], midiNotes[2], midiNotes[1], midiNotes[0], midiNotes[1]];
+                    if (item.arpeggioPattern && item.arpeggioPattern.length > 0) {
+                        arpNotes = item.arpeggioPattern.map(idx => {
+                            if (idx === -1) return undefined;
+                            // Find the midi note that corresponds to this string.
+                            // The `midiNotes` array contains only the valid (unmuted) strings in order from low to high.
+                            // However, `item.arpeggioPattern` contains string indices (0=Low E, 5=High e).
+                            // Let's get the original frets array to map string index to a midi note.
+                            const fretVal = chord.frets[idx];
+                            if (fretVal === 'x' || fretVal === undefined) return undefined;
+                            const strNum = 6 - idx;
+                            return (STRING_MIDI_BASE[strNum as keyof typeof STRING_MIDI_BASE] || 40) + (typeof fretVal === 'string' ? parseInt(fretVal) : fretVal);
+                        });
+                    }
+                    
+                    if (currentNoteRef.current < arpNotes.length) {
+                        if (arpNotes[currentNoteRef.current] !== undefined) {
+                            instrumentRef.current?.play(arpNotes[currentNoteRef.current]!.toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+                        }
+                        nextNoteTimeRef.current += secondsPerBeat / 2;
+                        currentNoteRef.current++;
+                    } else {
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
+                    }
+                } else if (activeStyle === 'funk') {
+                    const sixteenth = secondsPerBeat / 4;
+                    if (currentNoteRef.current === 0) {
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.9 }));
+                        nextNoteTimeRef.current += sixteenth * 3;
+                        currentNoteRef.current = 1;
+                    } else if (currentNoteRef.current === 1) {
+                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.7 }));
+                        nextNoteTimeRef.current += sixteenth * 5;
+                        currentNoteRef.current = 2;
+                    } else if (currentNoteRef.current === 2) {
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth * 2, gain: 0.8 }));
+                        nextNoteTimeRef.current += sixteenth * 8;
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
+                    }
                 } else {
-                    currentNoteRef.current = 0;
-                    currentMeasureRef.current++;
-                }
-            } else if (style === 'funk') {
-                const sixteenth = secondsPerBeat / 4;
-                if (currentNoteRef.current === 0) {
-                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.9 }));
-                    nextNoteTimeRef.current += sixteenth * 3;
-                    currentNoteRef.current = 1;
-                } else if (currentNoteRef.current === 1) {
-                    [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.7 }));
-                    nextNoteTimeRef.current += sixteenth * 5;
-                    currentNoteRef.current = 2;
-                } else if (currentNoteRef.current === 2) {
-                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth * 2, gain: 0.8 }));
-                    nextNoteTimeRef.current += sixteenth * 8;
-                    currentNoteRef.current = 0;
-                    currentMeasureRef.current++;
+                    if (currentNoteRef.current === 0) {
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat * 4, gain: 0.8 }));
+                        nextNoteTimeRef.current += secondsPerBeat * 4;
+                        currentNoteRef.current = 0;
+                        currentMeasureRef.current++;
+                    }
                 }
             }
 
@@ -624,7 +649,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     { positions: remainingPositions, duration: 'q' },
                 ];
             } else if (itemStyle === 'arpeggio') {
-                const arpPattern = [
+                let arpPattern = [
                     allPositions[0], 
                     allPositions[1], 
                     allPositions[2], 
@@ -635,10 +660,22 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                     allPositions[1]
                 ];
                 
-                return arpPattern.map(pos => ({
-                    positions: pos ? [pos] : [{str: 6, fret: 'X'}],
-                    duration: '8'
-                }));
+                if (item.arpeggioPattern && item.arpeggioPattern.length > 0) {
+                    arpPattern = item.arpeggioPattern.map(idx => {
+                        if (idx === -1) return undefined as any;
+                        const fretVal = item.chord.frets[idx];
+                        if (fretVal === 'x' || fretVal === undefined) return undefined as any;
+                        return { str: 6 - idx, fret: fretVal };
+                    });
+                }
+                
+                return arpPattern.map(pos => {
+                    if (!pos) return { duration: '8r', positions: [] };
+                    return {
+                        positions: [pos],
+                        duration: '8'
+                    };
+                });
             } else if (itemStyle === 'funk') {
                 return [
                     { positions: allPositions, duration: 'q' },
@@ -1065,6 +1102,46 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 This allows you to apply a specific pattern (like an Arpeggio) to just this chord, and saves to Jam Tracks!
                             </p>
                         </div>
+
+                        {progression[editingChordIndex].playbackStyle === 'arpeggio' && (
+                            <div className="bg-black/40 p-4 rounded-xl border border-white/5 mb-2 mt-4 animate-in fade-in zoom-in-95 duration-200">
+                                <label className="text-xs text-indigo-300 uppercase tracking-wider mb-2 font-bold flex items-center gap-2">
+                                    Arpeggio Sequence
+                                </label>
+                                <p className="text-xs text-slate-400 mb-4">Click to cycle through strings or rest.</p>
+                                <div className="flex gap-2 justify-between">
+                                    {Array.from({length: 8}).map((_, i) => {
+                                        const pattern = progression[editingChordIndex].arpeggioPattern || [0, 1, 2, 3, 2, 1, 0, 1];
+                                        const val = pattern[i];
+                                        const displayVal = val === -1 ? '-' : ['E', 'A', 'D', 'G', 'B', 'e'][val];
+                                        return (
+                                            <button 
+                                                key={i}
+                                                onClick={() => {
+                                                    const newPattern = [...pattern];
+                                                    let nextVal = val + 1;
+                                                    if (nextVal > 5) nextVal = -1;
+                                                    newPattern[i] = nextVal;
+                                                    setProgression(prev => {
+                                                        const newProg = [...prev];
+                                                        newProg[editingChordIndex] = {
+                                                            ...newProg[editingChordIndex],
+                                                            arpeggioPattern: newPattern
+                                                        };
+                                                        return newProg;
+                                                    });
+                                                }}
+                                                className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm transition-colors ${
+                                                    val === -1 ? 'bg-black/40 text-slate-500 border border-white/5' : 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/30 hover:bg-indigo-500/40'
+                                                }`}
+                                            >
+                                                {displayVal}
+                                            </button>
+                                        );
+                                    })}
+                                </div>
+                            </div>
+                        )}
                         
                         <div className="mt-6 flex justify-end">
                             <button 
