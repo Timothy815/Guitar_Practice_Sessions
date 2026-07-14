@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Square, Repeat } from 'lucide-react';
 import * as Tone from 'tone';
+import Soundfont from 'soundfont-player';
 import type { TabNoteData } from '../data/routines';
 
 interface RhythmPlayerProps {
@@ -63,7 +64,7 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         return countStrs.join(" | ");
     };
 
-    const synthRef = useRef<Tone.PolySynth | null>(null);
+    const instrumentRef = useRef<any>(null);
     const clickSynthRef = useRef<Tone.Synth | null>(null);
     const lastNoteRef = useRef<{midi: number, str: number} | null>(null);
 
@@ -81,7 +82,7 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         const isRest = durationStr.includes('r');
 
         // Guitar Sample Synth
-        if (synthRef.current && !isRest) {
+        if (instrumentRef.current && !isRest) {
             noteData.positions.forEach(pos => {
                 if (pos.fret === 'x' || pos.fret === undefined) return;
                 const fretNum = typeof pos.fret === 'string' ? parseInt(pos.fret, 10) : pos.fret;
@@ -89,11 +90,11 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 
                 const midi = (STRING_MIDI_BASE[pos.str as keyof typeof STRING_MIDI_BASE] || 40) + fretNum;
                 
-                let velocity = 1.0;
+                let gain = 1.0;
                 let attackTime = time;
                 
                 if (noteData.articulation === 'hammer' || noteData.articulation === 'pull') {
-                    velocity = 0.5; // Softer attack for legato
+                    gain = 0.6; // Softer attack for legato
                 }
                 
                 if (noteData.articulation === 'slide' && lastNoteRef.current && lastNoteRef.current.str === pos.str) {
@@ -106,16 +107,14 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                         let dir = startMidi < endMidi ? 1 : -1;
                         for (let i = 1; i < steps; i++) {
                             const slideMidi = startMidi + (i * dir);
-                            const slideNote = Tone.Frequency(slideMidi, "midi").toNote();
-                            synthRef.current?.triggerAttackRelease(slideNote, stepTime, time + (i * stepTime), 0.6);
+                            instrumentRef.current.play(slideMidi, time + (i * stepTime), { duration: stepTime * 1.5, gain: 0.7 });
                         }
                         attackTime = time + (steps * stepTime);
-                        velocity = 0.8;
+                        gain = 0.9;
                     }
                 }
                 
-                const noteName = Tone.Frequency(midi, "midi").toNote();
-                synthRef.current?.triggerAttackRelease(noteName, durationSec * 0.9, attackTime, velocity);
+                instrumentRef.current.play(midi, attackTime, { duration: durationSec * 1.5, gain });
                 lastNoteRef.current = { midi, str: pos.str };
             });
         }
@@ -161,20 +160,28 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
     const loadInstrumentAndPlay = async () => {
         await Tone.start();
         
-        if (!synthRef.current) {
+        if (!instrumentRef.current) {
             setIsLoading(true);
             try {
-                const dist = new Tone.Distortion(0.3);
+                // Set up Tone.js effects chain
+                const dist = new Tone.Distortion(0.15); // light overdrive
                 const filter = new Tone.Filter(3500, "lowpass");
                 const reverb = new Tone.Reverb(2.5);
                 const chorus = new Tone.Chorus(4, 2.5, 0.5);
                 
-                synthRef.current = new Tone.PolySynth(Tone.Synth, {
-                    oscillator: { type: "triangle8" },
-                    envelope: { attack: 0.005, decay: 1.5, sustain: 0.2, release: 1.2 }
-                }).chain(dist, filter, chorus, reverb, Tone.Destination);
-                
+                // Connect them
+                const effectsChain = new Tone.Volume(-2).chain(dist, filter, chorus, reverb, Tone.Destination);
                 await reverb.generate(); // Pre-calculate reverb
+                
+                // We must provide the raw AudioContext to Soundfont
+                // We use Tone.context.rawContext and route its destination to our Tone chain
+                const ac = Tone.getContext().rawContext;
+                
+                // We can't directly route to `effectsChain` in the options easily due to type mismatches,
+                // but we can pass `destination: effectsChain as any`
+                instrumentRef.current = await Soundfont.instrument(ac as any, 'electric_guitar_clean', {
+                    destination: effectsChain as any
+                });
                 
                 clickSynthRef.current = new Tone.Synth({
                     oscillator: { type: "square" },
@@ -182,7 +189,7 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 }).toDestination();
                 
             } catch (error) {
-                console.error("Failed to load tone.js instruments", error);
+                console.error("Failed to load tone.js / soundfont instruments", error);
             }
             setIsLoading(false);
         }
@@ -203,8 +210,7 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 cancelAnimationFrame(timerIDRef.current);
                 timerIDRef.current = null;
             }
-            // Silence synths on stop
-            if (synthRef.current) synthRef.current.releaseAll();
+            // Soundfont player doesn't have a releaseAll, so we just stop the timer
         }
         
         return () => {

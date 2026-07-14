@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { Play, Square, Trash2, Download, Upload, Edit2, X } from 'lucide-react';
 import Soundfont from 'soundfont-player';
+import * as Tone from 'tone';
 import { Midi } from '@tonejs/midi';
 // @ts-ignore
 import MidiWriter from 'midi-writer-js';
@@ -363,15 +364,28 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
     const chords = getAllDiatonicChords(keyName, quality, family);
 
     const playChordOnce = async (chord: any) => {
+        await Tone.start();
         if (!audioCtxRef.current) {
-            audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            audioCtxRef.current = Tone.getContext().rawContext as AudioContext;
         }
-        if (audioCtxRef.current.state === 'suspended') {
-            await audioCtxRef.current.resume();
-        }
+
         if (!instrumentRef.current) {
             setIsLoading(true);
-            instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'acoustic_guitar_steel');
+            try {
+                const dist = new Tone.Distortion(0.1);
+                const filter = new Tone.Filter(3000, "lowpass");
+                const reverb = new Tone.Reverb(2.5);
+                const chorus = new Tone.Chorus(4, 2.5, 0.5);
+                
+                const effectsChain = new Tone.Volume(-2).chain(dist, filter, chorus, reverb, Tone.Destination);
+                await reverb.generate();
+                
+                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'electric_guitar_clean', {
+                    destination: effectsChain as any
+                });
+            } catch(e) {
+                console.error(e);
+            }
             setIsLoading(false);
         }
 
@@ -426,15 +440,28 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
             return;
         }
 
+        await Tone.start();
         if (!audioCtxRef.current) {
-            audioCtxRef.current = new (window.AudioContext || (window as any).webkitAudioContext)();
+            audioCtxRef.current = Tone.getContext().rawContext as AudioContext;
         }
-        if (audioCtxRef.current.state === 'suspended') {
-            await audioCtxRef.current.resume();
-        }
+
         if (!instrumentRef.current) {
             setIsLoading(true);
-            instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'acoustic_guitar_steel');
+            try {
+                const dist = new Tone.Distortion(0.1);
+                const filter = new Tone.Filter(3000, "lowpass");
+                const reverb = new Tone.Reverb(2.5);
+                const chorus = new Tone.Chorus(4, 2.5, 0.5);
+                
+                const effectsChain = new Tone.Volume(-2).chain(dist, filter, chorus, reverb, Tone.Destination);
+                await reverb.generate();
+                
+                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'electric_guitar_clean', {
+                    destination: effectsChain as any
+                });
+            } catch(e) {
+                console.error(e);
+            }
             setIsLoading(false);
         }
 

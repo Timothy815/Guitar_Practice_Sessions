@@ -1,9 +1,10 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Square, Settings2, Music, Trash2, Upload } from 'lucide-react';
 import Soundfont from 'soundfont-player';
+import * as Tone from 'tone';
+import { Midi } from '@tonejs/midi';
 import VexFlowTab from './VexFlowTab';
 import type { TabNoteData } from '../data/routines';
-import { Midi } from '@tonejs/midi';
 
 interface JamPlayerProps {
     shapeData: any;
@@ -636,19 +637,26 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
     };
 
     const loadInstrumentAndPlay = async () => {
-        if (!audioCtxRef.current) {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            audioCtxRef.current = new AudioContext();
-        }
+        await Tone.start();
         
-        if (audioCtxRef.current.state === 'suspended') {
-            await audioCtxRef.current.resume();
+        if (!audioCtxRef.current) {
+            audioCtxRef.current = Tone.getContext().rawContext as AudioContext;
         }
 
         if (!instrumentRef.current) {
             setIsLoading(true);
             try {
-                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'acoustic_guitar_steel');
+                const dist = new Tone.Distortion(0.1);
+                const filter = new Tone.Filter(3000, "lowpass");
+                const reverb = new Tone.Reverb(2.5);
+                const chorus = new Tone.Chorus(4, 2.5, 0.5);
+                
+                const effectsChain = new Tone.Volume(-2).chain(dist, filter, chorus, reverb, Tone.Destination);
+                await reverb.generate();
+                
+                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'electric_guitar_clean', {
+                    destination: effectsChain as any
+                });
             } catch (error) {
                 console.error("Failed to load soundfont", error);
             }
