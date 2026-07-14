@@ -170,12 +170,13 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 const chorus = new Tone.Chorus(4, 2.5, 0.5);
                 
                 // Connect them
-                const effectsChain = new Tone.Volume(-2).chain(dist, filter, chorus, reverb, Tone.Destination);
+                const vol = new Tone.Volume(-2);
+                vol.chain(dist, filter, chorus, reverb, Tone.Destination);
                 await reverb.generate(); // Pre-calculate reverb
                 
                 const ac = Tone.getContext().rawContext;
                 const rawGain = ac.createGain();
-                Tone.connect(rawGain, effectsChain);
+                rawGain.connect((vol as any).input || vol as any);
                 
                 instrumentRef.current = await Soundfont.instrument(ac as any, 'electric_guitar_clean', {
                     destination: rawGain as any
