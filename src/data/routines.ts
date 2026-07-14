@@ -4,6 +4,7 @@ import type { ScaleFamily, ScaleQuality } from './musicEngine';
 export interface TabNoteData {
     positions: { str: number; fret: number | string }[];
     duration?: string;
+    articulation?: 'slide' | 'hammer' | 'pull' | 'bend' | 'vibrato';
 }
 
 export interface Exercise {
@@ -321,41 +322,41 @@ function generateTechniqueMeasures(dayOfWeek: string, notesAsc: {str: number, fr
             return [
                 [
                     { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "q" },
-                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "q" }, // Slide up
-                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "h" }, // Slide down
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "q", articulation: "slide" }, // Slide up
+                    { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "h", articulation: "slide" }, // Slide down
                 ],
                 [
                     { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "q" },
-                    { positions: [{ str: s2_n1.str, fret: s2_n2.fret }], duration: "q" }, // Slide up
-                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "h" }, // Slide down
+                    { positions: [{ str: s2_n1.str, fret: s2_n2.fret }], duration: "q", articulation: "slide" }, // Slide up
+                    { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "h", articulation: "slide" }, // Slide down
                 ]
             ];
         case "Tuesday": // Hammer-ons
             return [
                 [
                     { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "8" },
-                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "8" }, // Hammer
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "8", articulation: "hammer" }, // Hammer
                     { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "8" },
-                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "8" }, // Hammer
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "8", articulation: "hammer" }, // Hammer
                     { positions: [{ str: s3_n1.str, fret: s3_n1.fret }], duration: "q" },
-                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "q" }, // Hammer
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "q", articulation: "hammer" }, // Hammer
                 ]
             ];
         case "Wednesday": // Pull-offs
             return [
                 [
                     { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "8" },
-                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "8" }, // Pull-off
+                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "8", articulation: "pull" }, // Pull-off
                     { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "8" },
-                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "8" }, // Pull-off
+                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "8", articulation: "pull" }, // Pull-off
                     { positions: [{ str: s2_n2.str, fret: s2_n2.fret }], duration: "q" },
-                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "q" }, // Pull-off
+                    { positions: [{ str: s2_n2.str, fret: s2_n1.fret }], duration: "q", articulation: "pull" }, // Pull-off
                 ]
             ];
         case "Thursday": // Bends
             return [
                 [
-                    { positions: [{ str: s3_n2.str, fret: s3_n2.fret }], duration: "h" }, // Bend up
+                    { positions: [{ str: s3_n2.str, fret: s3_n2.fret }], duration: "h", articulation: "bend" }, // Bend up
                     { positions: [{ str: s3_n2.str, fret: s3_n1.fret }], duration: "q" }, // Release
                     { positions: [{ str: s2_n1.str, fret: s2_n1.fret }], duration: "q" }, // Resolution
                 ]
@@ -363,10 +364,10 @@ function generateTechniqueMeasures(dayOfWeek: string, notesAsc: {str: number, fr
         case "Friday": // Vibrato
             return [
                 [
-                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "w" },
+                    { positions: [{ str: s3_n1.str, fret: s3_n2.fret }], duration: "w", articulation: "vibrato" },
                 ],
                 [
-                    { positions: [{ str: s2_n1.str, fret: s2_n2.fret }], duration: "w" },
+                    { positions: [{ str: s2_n1.str, fret: s2_n2.fret }], duration: "w", articulation: "vibrato" },
                 ]
             ];
         case "Saturday": // Double Stops

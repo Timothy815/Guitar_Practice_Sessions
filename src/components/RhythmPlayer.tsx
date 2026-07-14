@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import { Play, Square, Repeat } from 'lucide-react';
-import Soundfont from 'soundfont-player';
+import * as Tone from 'tone';
 import type { TabNoteData } from '../data/routines';
 
 interface RhythmPlayerProps {
@@ -27,8 +27,6 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         isLoopingRef.current = isLooping;
     }, [isLooping]);
     
-    const audioCtxRef = useRef<AudioContext | null>(null);
-    const instrumentRef = useRef<Soundfont.Player | null>(null);
     const nextNoteTimeRef = useRef(0);
     const currentMeasureRef = useRef(0);
     const currentNoteRef = useRef(0);
@@ -65,9 +63,11 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         return countStrs.join(" | ");
     };
 
+    const synthRef = useRef<Tone.PolySynth | null>(null);
+    const clickSynthRef = useRef<Tone.Synth | null>(null);
+    const lastNoteRef = useRef<{midi: number, str: number} | null>(null);
+
     const scheduleNote = (measureIdx: number, noteIdx: number, time: number): number => {
-        if (!audioCtxRef.current) return 0;
-        
         const noteData = measures[measureIdx][noteIdx];
         const durationStr = noteData.duration || 'q';
         let beatValue = 1;
@@ -78,41 +78,60 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         
         const secondsPerBeat = 60.0 / bpm;
         const durationSec = beatValue * secondsPerBeat;
+        const isRest = durationStr.includes('r');
 
         // Guitar Sample Synth
-        noteData.positions.forEach(pos => {
-            if (pos.fret === 'x' || pos.fret === undefined) return;
-            const fretNum = typeof pos.fret === 'string' ? parseInt(pos.fret, 10) : pos.fret;
-            const midi = (STRING_MIDI_BASE[pos.str as keyof typeof STRING_MIDI_BASE] || 40) + fretNum;
-            
-            if (instrumentRef.current) {
-                // Play realistic guitar sample
-                instrumentRef.current.play(midi, time, { duration: durationSec * 1.5, gain: 1.5 });
-            }
-        });
+        if (synthRef.current && !isRest) {
+            noteData.positions.forEach(pos => {
+                if (pos.fret === 'x' || pos.fret === undefined) return;
+                const fretNum = typeof pos.fret === 'string' ? parseInt(pos.fret, 10) : pos.fret;
+                if (isNaN(fretNum)) return;
+                
+                const midi = (STRING_MIDI_BASE[pos.str as keyof typeof STRING_MIDI_BASE] || 40) + fretNum;
+                
+                let velocity = 1.0;
+                let attackTime = time;
+                
+                if (noteData.articulation === 'hammer' || noteData.articulation === 'pull') {
+                    velocity = 0.5; // Softer attack for legato
+                }
+                
+                if (noteData.articulation === 'slide' && lastNoteRef.current && lastNoteRef.current.str === pos.str) {
+                    // Simulate fretted slide by rapidly playing chromatic notes from last note to current note
+                    const startMidi = lastNoteRef.current.midi;
+                    const endMidi = midi;
+                    const steps = Math.abs(endMidi - startMidi);
+                    if (steps > 0 && steps < 12) {
+                        const stepTime = Math.min(0.03, (durationSec * 0.5) / steps);
+                        let dir = startMidi < endMidi ? 1 : -1;
+                        for (let i = 1; i < steps; i++) {
+                            const slideMidi = startMidi + (i * dir);
+                            const slideNote = Tone.Frequency(slideMidi, "midi").toNote();
+                            synthRef.current?.triggerAttackRelease(slideNote, stepTime, time + (i * stepTime), 0.6);
+                        }
+                        attackTime = time + (steps * stepTime);
+                        velocity = 0.8;
+                    }
+                }
+                
+                const noteName = Tone.Frequency(midi, "midi").toNote();
+                synthRef.current?.triggerAttackRelease(noteName, durationSec * 0.9, attackTime, velocity);
+                lastNoteRef.current = { midi, str: pos.str };
+            });
+        }
 
         // Metronome Click Synth
-        const clickOsc = audioCtxRef.current.createOscillator();
-        const clickGain = audioCtxRef.current.createGain();
-        clickOsc.type = 'square';
-        clickOsc.frequency.value = 800; // high pitch tick
-        clickGain.gain.setValueAtTime(0, time);
-        clickGain.gain.linearRampToValueAtTime(0.1, time + 0.001);
-        clickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
-        clickOsc.connect(clickGain);
-        clickGain.connect(audioCtxRef.current.destination);
-        clickOsc.start(time);
-        clickOsc.stop(time + 0.05);
+        if (clickSynthRef.current) {
+            clickSynthRef.current.triggerAttackRelease("C6", "32n", time, 0.5);
+        }
 
         return durationSec;
     };
 
     const scheduler = () => {
-        if (!audioCtxRef.current) return;
-        
         const scheduleAheadTime = 0.1; // 100ms
         
-        while (nextNoteTimeRef.current < audioCtxRef.current.currentTime + scheduleAheadTime) {
+        while (nextNoteTimeRef.current < Tone.now() + scheduleAheadTime) {
             if (currentMeasureRef.current >= measures.length) {
                 if (isLoopingRef.current) {
                     currentMeasureRef.current = 0;
@@ -140,22 +159,30 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
     };
 
     const loadInstrumentAndPlay = async () => {
-        if (!audioCtxRef.current) {
-            const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-            audioCtxRef.current = new AudioContext();
-        }
+        await Tone.start();
         
-        if (audioCtxRef.current.state === 'suspended') {
-            await audioCtxRef.current.resume();
-        }
-
-        if (!instrumentRef.current) {
+        if (!synthRef.current) {
             setIsLoading(true);
             try {
-                // Load realistic steel acoustic guitar soundfont
-                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'acoustic_guitar_steel');
+                const dist = new Tone.Distortion(0.3);
+                const filter = new Tone.Filter(3500, "lowpass");
+                const reverb = new Tone.Reverb(2.5);
+                const chorus = new Tone.Chorus(4, 2.5, 0.5);
+                
+                synthRef.current = new Tone.PolySynth(Tone.Synth, {
+                    oscillator: { type: "triangle8" },
+                    envelope: { attack: 0.005, decay: 1.5, sustain: 0.2, release: 1.2 }
+                }).chain(dist, filter, chorus, reverb, Tone.Destination);
+                
+                await reverb.generate(); // Pre-calculate reverb
+                
+                clickSynthRef.current = new Tone.Synth({
+                    oscillator: { type: "square" },
+                    envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.01 }
+                }).toDestination();
+                
             } catch (error) {
-                console.error("Failed to load soundfont", error);
+                console.error("Failed to load tone.js instruments", error);
             }
             setIsLoading(false);
         }
@@ -163,7 +190,8 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         // Start playback
         currentMeasureRef.current = 0;
         currentNoteRef.current = 0;
-        nextNoteTimeRef.current = audioCtxRef.current.currentTime + 0.1;
+        lastNoteRef.current = null;
+        nextNoteTimeRef.current = Tone.now() + 0.1;
         timerIDRef.current = requestAnimationFrame(scheduler);
     };
 
@@ -175,9 +203,8 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 cancelAnimationFrame(timerIDRef.current);
                 timerIDRef.current = null;
             }
-            if (audioCtxRef.current) {
-                audioCtxRef.current.suspend();
-            }
+            // Silence synths on stop
+            if (synthRef.current) synthRef.current.releaseAll();
         }
         
         return () => {
