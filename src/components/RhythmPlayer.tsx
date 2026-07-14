@@ -176,7 +176,7 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 
                 const ac = Tone.getContext().rawContext;
                 const rawGain = ac.createGain();
-                rawGain.connect((vol as any).input || vol as any);
+                Tone.connect(rawGain, vol);
                 
                 instrumentRef.current = await Soundfont.instrument(ac as any, 'electric_guitar_clean', {
                     destination: rawGain as any
