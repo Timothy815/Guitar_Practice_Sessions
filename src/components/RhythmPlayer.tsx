@@ -163,28 +163,23 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
         if (!instrumentRef.current) {
             setIsLoading(true);
             try {
-                // Set up Tone.js effects chain
-                const dist = new Tone.Distortion(0.15); // light overdrive
-                const filter = new Tone.Filter(3500, "lowpass");
-                const reverb = new Tone.Reverb(2.5);
-                const chorus = new Tone.Chorus(4, 2.5, 0.5);
-                
-                // Connect them
-                const vol = new Tone.Volume(-2);
-                vol.chain(dist, filter, chorus, reverb, Tone.Destination);
+                const reverb = new Tone.Reverb(1.5);
+                const vol = new Tone.Volume(6); // Boost acoustic guitar volume
+                vol.chain(reverb, Tone.Destination);
                 await reverb.generate(); // Pre-calculate reverb
                 
                 const ac = Tone.getContext().rawContext;
                 const rawGain = ac.createGain();
                 Tone.connect(rawGain, vol);
                 
-                instrumentRef.current = await Soundfont.instrument(ac as any, 'electric_guitar_clean', {
+                instrumentRef.current = await Soundfont.instrument(ac as any, 'acoustic_guitar_steel', {
                     destination: rawGain as any
                 });
                 
                 clickSynthRef.current = new Tone.Synth({
                     oscillator: { type: "square" },
-                    envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.01 }
+                    envelope: { attack: 0.001, decay: 0.05, sustain: 0, release: 0.01 },
+                    volume: -10
                 }).toDestination();
                 
             } catch (error) {

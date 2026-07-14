@@ -597,7 +597,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
             clickOsc.type = 'square';
             clickOsc.frequency.value = 600; 
             clickGain.gain.setValueAtTime(0, time);
-            clickGain.gain.linearRampToValueAtTime(0.05, time + 0.001);
+            clickGain.gain.linearRampToValueAtTime(0.02, time + 0.001);
             clickGain.gain.exponentialRampToValueAtTime(0.001, time + 0.05);
             clickOsc.connect(clickGain);
             clickGain.connect(audioCtxRef.current.destination);
@@ -646,20 +646,16 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         if (!instrumentRef.current) {
             setIsLoading(true);
             try {
-                const dist = new Tone.Distortion(0.1);
-                const filter = new Tone.Filter(3000, "lowpass");
-                const reverb = new Tone.Reverb(2.5);
-                const chorus = new Tone.Chorus(4, 2.5, 0.5);
-                
-                const vol = new Tone.Volume(-2);
-                vol.chain(dist, filter, chorus, reverb, Tone.Destination);
+                const reverb = new Tone.Reverb(1.5);
+                const vol = new Tone.Volume(6); // Boost acoustic guitar volume
+                vol.chain(reverb, Tone.Destination);
                 await reverb.generate();
                 
                 const ac = Tone.getContext().rawContext;
                 const rawGain = ac.createGain();
                 Tone.connect(rawGain, vol);
                 
-                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'electric_guitar_clean', {
+                instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'acoustic_guitar_steel', {
                     destination: rawGain as any
                 });
             } catch (error) {
