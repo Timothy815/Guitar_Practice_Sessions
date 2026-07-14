@@ -7,7 +7,8 @@ import MidiWriter from 'midi-writer-js';
 import { getAllDiatonicChords } from '../data/musicEngine';
 import type { ScaleFamily, ScaleQuality } from '../data/musicEngine';
 import ChordDiagram from './ChordDiagram';
-import ProgressionTablature from './ProgressionTablature';
+import VexFlowTab from './VexFlowTab';
+import type { TabNoteData } from '../data/routines';
 
 interface ChordSandboxViewProps {
     keyName: string;
@@ -584,6 +585,71 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         }
     };
 
+    const generateVexFlowMeasures = (): TabNoteData[][] => {
+        return progression.map(item => {
+            const itemStyle = item.rhythm ? 'custom_override' : style;
+            
+            const allPositions: {str: number, fret: string | number}[] = [];
+            item.chord.frets.forEach((fret: number | string, i: number) => {
+                if (fret !== 'x') {
+                    allPositions.push({ str: 6 - i, fret });
+                }
+            });
+            
+            if (allPositions.length === 0) {
+                return [ { positions: [{str: 6, fret: 'X'}], duration: 'w' } ];
+            }
+
+            const lowest2Positions = allPositions.slice(0, 2);
+            const lowest1Position = allPositions.slice(0, 1);
+            const remainingPositions = allPositions.slice(1);
+
+            if (itemStyle === 'folk') {
+                return [
+                    { positions: allPositions, duration: 'h' },
+                    { positions: allPositions, duration: 'q' },
+                    { positions: allPositions, duration: 'q' },
+                ];
+            } else if (itemStyle === 'rock') {
+                return [
+                    { positions: lowest2Positions, duration: 'q' },
+                    { positions: lowest2Positions, duration: 'q' },
+                    { positions: allPositions, duration: 'h' },
+                ];
+            } else if (itemStyle === 'waltz') {
+                return [
+                    { positions: lowest1Position, duration: 'q' },
+                    { positions: remainingPositions, duration: 'q' },
+                    { positions: remainingPositions, duration: 'q' },
+                ];
+            } else if (itemStyle === 'arpeggio') {
+                const arpPattern = [
+                    allPositions[0], 
+                    allPositions[1], 
+                    allPositions[2], 
+                    allPositions.length > 3 ? allPositions[3] : allPositions[2],
+                    allPositions[2], 
+                    allPositions[1], 
+                    allPositions[0], 
+                    allPositions[1]
+                ];
+                
+                return arpPattern.map(pos => ({
+                    positions: pos ? [pos] : [{str: 6, fret: 'X'}],
+                    duration: '8'
+                }));
+            } else if (itemStyle === 'funk') {
+                return [
+                    { positions: allPositions, duration: 'q' },
+                    { positions: allPositions, duration: 'q' },
+                    { positions: allPositions, duration: 'h' },
+                ];
+            } else {
+                return [ { positions: allPositions, duration: 'w' } ];
+            }
+        });
+    };
+
     return (
         <div className="flex flex-col gap-8 animate-in fade-in duration-500">
             {/* Header / Options */}
@@ -867,7 +933,10 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                 )}
             </div>
 
-            <ProgressionTablature progression={progression} globalStyle={style} customRhythm={customRhythm} />
+            <div className="mt-8 bg-slate-900 border border-white/10 rounded-2xl p-6 print:border-none print:p-0 print:bg-white">
+                <h3 className="text-xl font-bold text-white mb-6 print:text-black print:border-b-2 print:border-black print:pb-2">Tablature</h3>
+                <VexFlowTab measures={generateVexFlowMeasures()} />
+            </div>
 
             {/* Edit Voicing Modal */}
             {editingChordIndex !== null && progression[editingChordIndex] && (
