@@ -50,7 +50,9 @@ export default function VexFlowTab({ measures }: VexFlowTabProps) {
                 if (measureNotes.length > 0) {
                     const notes = measureNotes.map(n => 
                         new TabNote({
-                            positions: n.positions.map(p => ({ str: p.str, fret: p.fret.toString() })),
+                            positions: n.positions.length > 0 
+                                ? n.positions.map(p => ({ str: p.str, fret: p.fret.toString() }))
+                                : [{ str: 3, fret: 'X' }],
                             duration: n.duration || 'q'
                         })
                     );
