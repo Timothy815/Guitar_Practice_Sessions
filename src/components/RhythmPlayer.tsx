@@ -173,14 +173,12 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                 const effectsChain = new Tone.Volume(-2).chain(dist, filter, chorus, reverb, Tone.Destination);
                 await reverb.generate(); // Pre-calculate reverb
                 
-                // We must provide the raw AudioContext to Soundfont
-                // We use Tone.context.rawContext and route its destination to our Tone chain
                 const ac = Tone.getContext().rawContext;
+                const rawGain = ac.createGain();
+                Tone.connect(rawGain, effectsChain);
                 
-                // We can't directly route to `effectsChain` in the options easily due to type mismatches,
-                // but we can pass `destination: effectsChain as any`
                 instrumentRef.current = await Soundfont.instrument(ac as any, 'electric_guitar_clean', {
-                    destination: effectsChain as any
+                    destination: rawGain as any
                 });
                 
                 clickSynthRef.current = new Tone.Synth({

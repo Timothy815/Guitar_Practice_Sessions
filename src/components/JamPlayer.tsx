@@ -654,8 +654,12 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 const effectsChain = new Tone.Volume(-2).chain(dist, filter, chorus, reverb, Tone.Destination);
                 await reverb.generate();
                 
+                const ac = Tone.getContext().rawContext;
+                const rawGain = ac.createGain();
+                Tone.connect(rawGain, effectsChain);
+                
                 instrumentRef.current = await Soundfont.instrument(audioCtxRef.current, 'electric_guitar_clean', {
-                    destination: effectsChain as any
+                    destination: rawGain as any
                 });
             } catch (error) {
                 console.error("Failed to load soundfont", error);
