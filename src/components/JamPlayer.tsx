@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
-import { Play, Square, Settings2, Music, Trash2 } from 'lucide-react';
+import { Play, Square, Settings2, Music, Trash2, Upload } from 'lucide-react';
 import Soundfont from 'soundfont-player';
 import VexFlowTab from './VexFlowTab';
 import type { TabNoteData } from '../data/routines';
+import { Midi } from '@tonejs/midi';
 
 interface JamPlayerProps {
     shapeData: any;
@@ -135,9 +136,64 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
     }
 
     const generateMeasures = () => {
+        if (progId.startsWith('custom_jam_')) {
+            const customJam = customJams.find(j => j.id === progId);
+            if (customJam && customJam.style === 'raw_midi' && customJam.rawSteps) {
+                const rawMeasures: any[][] = [];
+                const tabMeasures: TabNoteData[][] = [];
+                let currentMeasure: any[] = [];
+                let currentTabMeasure: TabNoteData[] = [];
+                let currentBeats = 0;
+                
+                customJam.rawSteps.forEach((step: any) => {
+                    currentMeasure.push({
+                        midiNotes: step.midiNotes,
+                        duration: 'custom',
+                        absoluteBeatValue: step.absoluteBeatValue,
+                        velocity: step.velocity,
+                        isRest: step.midiNotes.length === 0
+                    });
+                    
+                    const positions = step.midiNotes.map((m: number) => {
+                        const str = m >= 64 ? 1 : m >= 59 ? 2 : m >= 55 ? 3 : m >= 50 ? 4 : m >= 45 ? 5 : 6;
+                        const baseMidi = str === 1 ? 64 : str === 2 ? 59 : str === 3 ? 55 : str === 4 ? 50 : str === 5 ? 45 : 40;
+                        return { str, fret: Math.max(0, m - baseMidi) };
+                    });
+                    
+                    let durationCode = "q";
+                    if (step.absoluteBeatValue <= 0.25) durationCode = "16";
+                    else if (step.absoluteBeatValue <= 0.5) durationCode = "8";
+                    else if (step.absoluteBeatValue <= 1.0) durationCode = "q";
+                    else if (step.absoluteBeatValue <= 2.0) durationCode = "h";
+                    else durationCode = "w";
+                    
+                    if (step.midiNotes.length === 0) {
+                        durationCode += "r";
+                    }
+                    
+                    currentTabMeasure.push({ duration: durationCode, positions });
+                    currentBeats += step.absoluteBeatValue;
+                    
+                    if (currentBeats >= 3.99) {
+                        rawMeasures.push(currentMeasure);
+                        tabMeasures.push(currentTabMeasure);
+                        currentMeasure = [];
+                        currentTabMeasure = [];
+                        currentBeats = 0;
+                    }
+                });
+                
+                if (currentMeasure.length > 0) {
+                    rawMeasures.push(currentMeasure);
+                    tabMeasures.push(currentTabMeasure);
+                }
+                
+                return { measures: rawMeasures, tabMeasures };
+            }
+        }
+
         const measures: any[] = [];
         let chordMidiArrays: { midiNotes: number[], rhythm?: number[], styleOverride?: string, positions?: {str: number, fret: string | number}[], arpeggioPattern?: number[][] | number[], frets?: (number | string)[] }[] = [];
-        
         if (progId === 'shape') {
             // Use the actual chords mapped to this shape position
             if (!shapeData.actualChords || shapeData.actualChords.length === 0) return { measures: [], tabMeasures: [] };
@@ -585,6 +641,68 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
             if (isPlaying) {
                 setIsPlaying(false);
             }
+        }
+    };
+
+    const handleMidiUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        try {
+            const arrayBuffer = await file.arrayBuffer();
+            const midi = new Midi(arrayBuffer);
+            
+            const track = midi.tracks.find(t => t.notes.length > 0);
+            if (!track) {
+                alert("No notes found in this MIDI file.");
+                return;
+            }
+            
+            // Collect all unique times with 0.01s tolerance
+            const times: number[] = [];
+            track.notes.forEach(n => {
+                if (!times.find(t => Math.abs(t - n.time) < 0.01)) {
+                    times.push(n.time);
+                }
+            });
+            times.sort((a, b) => a - b);
+            
+            const steps: any[] = [];
+            const originalBpm = midi.header.tempos[0]?.bpm || 120;
+            const secondsPerBeat = 60.0 / originalBpm;
+            
+            for (let i = 0; i < times.length; i++) {
+                const time = times[i];
+                const nextTime = i < times.length - 1 ? times[i+1] : time + 0.5;
+                const durSeconds = nextTime - time;
+                const beats = durSeconds / secondsPerBeat;
+                
+                const notesAtTime = track.notes.filter(n => Math.abs(n.time - time) < 0.01);
+                
+                steps.push({
+                    midiNotes: notesAtTime.map(n => n.midi),
+                    absoluteBeatValue: beats,
+                    velocity: notesAtTime[0].velocity || 0.8
+                });
+            }
+            
+            const newJam = {
+                id: `custom_jam_${Date.now()}`,
+                name: file.name.replace('.mid', '').replace('.midi', ''),
+                style: 'raw_midi',
+                bpm: Math.round(originalBpm),
+                rawSteps: steps
+            };
+            
+            const updatedJams = [...customJams, newJam];
+            setCustomJams(updatedJams);
+            localStorage.setItem('fretfocus_custom_jams', JSON.stringify(updatedJams));
+            setProgId(newJam.id);
+            setBpm(newJam.bpm);
+            alert('MIDI imported successfully! You can find it in your Custom Jams.');
+        } catch (error) {
+            console.error(error);
+            alert("Failed to parse MIDI file.");
         }
     };
 
