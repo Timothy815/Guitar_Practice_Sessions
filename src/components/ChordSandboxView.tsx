@@ -361,8 +361,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
             setIsLoading(false);
         }
 
-        const rootName = chord.name.replace(/m|dim/, '');
-        const midiNotes = getChordMidi(rootName, chord.quality);
+        const midiNotes = getChordMidi(chord.frets);
         const t = audioCtxRef.current.currentTime;
         
         midiNotes.forEach((midi, i) => {
@@ -370,19 +369,41 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
         });
     };
 
-    const getChordMidi = (rootName: string, q: string): number[] => {
-        const base = ROOT_MIDI[rootName] ?? 40;
-        if (base < 48) {
-            // E-form barre voicing
-            if (q === 'Major') return [base, base+7, base+12, base+16, base+19, base+24];
-            if (q === 'Minor') return [base, base+7, base+12, base+15, base+19, base+24];
-            return [base, base+6, base+12, base+15, base+18, base+24]; // Dim
-        } else {
-            // A-form barre voicing
-            if (q === 'Major') return [base, base+7, base+12, base+16, base+19];
-            if (q === 'Minor') return [base, base+7, base+12, base+15, base+19];
-            return [base, base+6, base+12, base+15, base+18]; // Dim
-        }
+    const getChordMidi = (frets: (number | 'x')[]): number[] => {
+        const TUNING = [40, 45, 50, 55, 59, 64]; // E A D G B e
+        const midiNotes: number[] = [];
+        frets.forEach((fret, i) => {
+            if (fret !== 'x') {
+                midiNotes.push(TUNING[i] + (fret as number));
+            }
+        });
+        return midiNotes;
+    };
+
+    const analyzeVoicing = (midiNotes: number[], rootName: string): string => {
+        if (midiNotes.length === 0) return "Muted";
+        const rootStr = rootName.replace(/m|dim|°/g, '').trim();
+        const rootPc = ROOT_MIDI[rootStr] % 12;
+        if (isNaN(rootPc)) return "";
+        const pcs = new Set(midiNotes.map(m => m % 12));
+        
+        const hasRoot = pcs.has(rootPc);
+        const hasMin3 = pcs.has((rootPc + 3) % 12);
+        const hasMaj3 = pcs.has((rootPc + 4) % 12);
+        const has3rd = hasMin3 || hasMaj3;
+        const hasFlat5 = pcs.has((rootPc + 6) % 12);
+        const has5th = pcs.has((rootPc + 7) % 12);
+        const hasMin7 = pcs.has((rootPc + 10) % 12);
+        const hasMaj7 = pcs.has((rootPc + 11) % 12);
+        const has7th = hasMin7 || hasMaj7;
+
+        if (!hasRoot) return "rootless";
+        if (!has3rd && (has5th || hasFlat5) && !has7th) return "power chord (5)";
+        if (has3rd && !has5th && has7th) return "shell voicing";
+        if (has3rd && !has5th && !has7th) return "no 5";
+        if (has3rd && (has5th || hasFlat5) && !has7th && midiNotes.length <= 4) return "triad";
+        
+        return "";
     };
 
     const loadInstrumentAndPlay = async () => {
@@ -443,8 +464,7 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
 
             const item = progression[currentMeasureRef.current];
             const chord = item.chord;
-            const rootName = chord.name.replace(/m|dim/, '');
-            const midiNotes = getChordMidi(rootName, chord.quality);
+            const midiNotes = getChordMidi(chord.frets);
             
             const secondsPerBeat = 60.0 / bpm;
             const activeRhythm = item.rhythm || (style === 'custom' ? customRhythm : null);
@@ -766,6 +786,11 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                                 <div className="text-center">
                                     <p className={`text-xl font-bold ${currentPlayIndex === idx ? 'text-white' : 'text-slate-300'}`}>{item.chord.name}</p>
                                     <p className="text-xs text-slate-500 font-mono mt-1">{item.chord.numeral}</p>
+                                    {analyzeVoicing(getChordMidi(item.chord.frets), item.chord.name) && (
+                                        <p className="text-[10px] text-indigo-300 mt-1 uppercase font-bold tracking-wider">
+                                            {analyzeVoicing(getChordMidi(item.chord.frets), item.chord.name)}
+                                        </p>
+                                    )}
                                     {item.rhythm && (
                                         <p className="text-[10px] text-emerald-400 mt-1 uppercase font-bold tracking-wider">Custom Rhythm</p>
                                     )}
@@ -825,6 +850,11 @@ export default function ChordSandboxView({ keyName, quality, family, onSettingsC
                             <div key={item.id} className="border-2 border-gray-300 p-4 rounded-xl flex flex-col items-center justify-center break-inside-avoid">
                                 <p className="text-2xl font-bold text-black mb-1">{item.chord.name}</p>
                                 <p className="text-lg text-gray-600 font-mono mb-4">{item.chord.numeral}</p>
+                                {analyzeVoicing(getChordMidi(item.chord.frets), item.chord.name) && (
+                                    <p className="text-sm text-indigo-600 mb-4 font-bold uppercase tracking-wider">
+                                        {analyzeVoicing(getChordMidi(item.chord.frets), item.chord.name)}
+                                    </p>
+                                )}
                                 <div className="transform scale-90">
                                     <ChordDiagram chord={{...item.chord, name: ''}} />
                                 </div>
