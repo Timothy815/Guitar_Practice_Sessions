@@ -552,12 +552,61 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             duration: 300,
             description: `Improvise over a backing track in ${key} ${quality} using ONLY ${shape.name}. Do not noodle endlessly. Apply strict constraints to force creativity.`,
             focusPoints: getDailyImprovConstraints(dayOfWeek),
-            // Use the top 3 strings for improv lick example
-            vexflowMeasures: chunkIntoMeasures(allNotesDesc.filter(n => n.str <= 3).slice(0, 8))
+            // Generate a more musical lick instead of just descending notes
+            vexflowMeasures: generateImprovLick(allNotesDesc)
         }
     ];
 
     return { routine, shapeData: shape };
+}
+
+function generateImprovLick(allNotesDesc: {str: number, fret: number}[]): TabNoteData[][] {
+    // Filter to top 3 strings for a lead lick
+    const topNotes = allNotesDesc.filter(n => n.str <= 3);
+    if (topNotes.length < 5) {
+        return chunkIntoMeasures(topNotes); // fallback
+    }
+    
+    // Create a bluesy / melodic sequence pattern rather than straight down
+    // Indices relative to the highest note in the shape (0 is highest)
+    // A nice pattern: 0, 1, 2, 0  -  3, 1, 2, 4 (with varying rhythms)
+    const pattern = [
+        { idx: 0, dur: "8" },
+        { idx: 1, dur: "8" },
+        { idx: 2, dur: "8" },
+        { idx: 0, dur: "8" },
+        
+        { idx: 3, dur: "q" },
+        { idx: 1, dur: "8" },
+        { idx: 2, dur: "8" },
+        
+        { idx: 4, dur: "q" },
+        { idx: -1, dur: "qr" }, // rest
+        { idx: -1, dur: "hr" } // rest
+    ];
+    
+    const measures: TabNoteData[][] = [[], []];
+    let currentBeat = 0;
+    let measureIdx = 0;
+    
+    for (const p of pattern) {
+        const beatVal = p.dur.includes("16") ? 0.25 : p.dur.includes("8") ? 0.5 : p.dur.includes("h") ? 2 : p.dur.includes("w") ? 4 : 1;
+        if (currentBeat + beatVal > 4.01) {
+            measureIdx++;
+            currentBeat = 0;
+            if (measureIdx >= 2) break;
+        }
+        currentBeat += beatVal;
+        
+        if (p.idx === -1) {
+            measures[measureIdx].push({ duration: p.dur, positions: [] });
+        } else {
+            const note = topNotes[Math.min(p.idx, topNotes.length - 1)];
+            measures[measureIdx].push({ duration: p.dur, positions: [{str: note.str, fret: note.fret}] });
+        }
+    }
+    
+    return measures;
 }
 
 function getDailyImprovConstraints(dayOfWeek: string): string[] {

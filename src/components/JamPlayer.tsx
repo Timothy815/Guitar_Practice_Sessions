@@ -486,7 +486,51 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 tabMeasures.push([
                     { duration: "16", positions }, { duration: "16", positions }, { duration: "8r", positions: [] },
                     { duration: "16", positions }, { duration: "16", positions }, { duration: "8", positions },
-                    { duration: "qr", positions: [] }
+                ]);
+            } else if (activeStyle === 'rock_eighths') {
+                measures.push([
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "8", velocity: 0.8 },
+                    { midiNotes, duration: "8", velocity: 0.9 },
+                    { midiNotes, duration: "8", velocity: 0.8 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "8", velocity: 0.8 },
+                    { midiNotes, duration: "8", velocity: 0.9 },
+                    { midiNotes, duration: "8", velocity: 0.8 }
+                ]);
+                tabMeasures.push([
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions }
+                ]);
+            } else if (activeStyle === 'reggae') {
+                measures.push([
+                    { midiNotes: [], duration: "8", velocity: 0 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes: [], duration: "8", velocity: 0 },
+                    { midiNotes, duration: "8", velocity: 0.8 },
+                    { midiNotes: [], duration: "8", velocity: 0 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes: [], duration: "8", velocity: 0 },
+                    { midiNotes, duration: "8", velocity: 0.8 }
+                ]);
+                tabMeasures.push([
+                    { duration: "8r", positions: [] }, { duration: "8", positions },
+                    { duration: "8r", positions: [] }, { duration: "8", positions },
+                    { duration: "8r", positions: [] }, { duration: "8", positions },
+                    { duration: "8r", positions: [] }, { duration: "8", positions }
+                ]);
+            } else if (activeStyle === 'bossa_nova') {
+                measures.push([
+                    { midiNotes, duration: "qd", velocity: 1.0 }, // 1.5
+                    { midiNotes, duration: "8", velocity: 0.8 },  // 0.5
+                    { midiNotes, duration: "q", velocity: 0.9 },  // 1
+                    { midiNotes, duration: "q", velocity: 0.9 },  // 1
+                ]);
+                tabMeasures.push([
+                    { duration: "qd", positions }, { duration: "8", positions },
+                    { duration: "q", positions }, { duration: "q", positions }
                 ]);
             } else {
                 measures.push([{ midiNotes, duration: "q", velocity: 1.0 }, { midiNotes, duration: "q", velocity: 0.8 }, { midiNotes, duration: "q", velocity: 0.9 }, { midiNotes, duration: "q", velocity: 0.8 }]);
@@ -830,8 +874,13 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                     >
                         <option value="folk">Acoustic Strum (D D-U D D-U)</option>
                         <option value="quarters">Driving Quarters (D D D D)</option>
-                        <option value="upbeats">Reggae / Upbeats</option>
+                        <option value="rock_eighths">Straight Rock 8ths</option>
+                        <option value="upbeats">Upbeats / Ska</option>
+                        <option value="reggae">Reggae</option>
+                        <option value="bossa_nova">Bossa Nova</option>
                         <option value="shuffle">Blues Shuffle</option>
+                        <option value="arpeggio">Arpeggio</option>
+                        <option value="funk">Funk 16ths</option>
                         {progId.startsWith('custom_jam_') && (
                             <option value="custom">Original Tap Rhythm</option>
                         )}
