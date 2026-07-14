@@ -87,8 +87,9 @@ export default function App() {
                 
                 {(viewMode === 'sandbox' || viewMode === 'chords') && (
                     <div className="flex flex-wrap items-center justify-center gap-3 animate-in fade-in slide-in-from-right-4 duration-300">
-                        <div className="flex bg-white/5 border border-white/10 rounded-lg p-1">
+                        <div id="global-key-container" className="flex bg-white/5 border border-white/10 rounded-lg p-1 transition-all duration-300">
                             <select 
+                                id="global-key-selector"
                                 value={key}
                                 onChange={(e) => { setKey(e.target.value); setCurrentStepIndex(0); setOverrideShapeId(undefined); }}
                                 className="bg-transparent text-white px-3 py-1 focus:outline-none focus:text-primary transition-colors cursor-pointer border-r border-white/10"
@@ -150,7 +151,20 @@ export default function App() {
                     keyName={key} 
                     quality={scaleQuality} 
                     family={scaleFamily} 
-                    onSettingsClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+                    onSettingsClick={() => {
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                        setTimeout(() => {
+                            const container = document.getElementById('global-key-container');
+                            const selector = document.getElementById('global-key-selector');
+                            if (container && selector) {
+                                selector.focus();
+                                container.classList.add('ring-2', 'ring-fuchsia-500', 'shadow-[0_0_15px_rgba(217,70,239,0.5)]');
+                                setTimeout(() => {
+                                    container.classList.remove('ring-2', 'ring-fuchsia-500', 'shadow-[0_0_15px_rgba(217,70,239,0.5)]');
+                                }, 2000);
+                            }
+                        }, 500);
+                    }}
                 />
             ) : viewMode === 'drills' ? (
                 <DrillsView />
