@@ -74,14 +74,31 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                 if (midi.tracks.length > 0) {
                     const track = midi.tracks[0];
                     const pattern: any[] = [];
+                    const ppq = midi.header.ppq;
+                    let currentTick = 0;
+
+                    const ticksToDur = (ticks: number, isRest: boolean = false) => {
+                        let dur = "8";
+                        if (ticks >= ppq * 3.5) dur = "w";
+                        else if (ticks >= ppq * 1.5) dur = "h";
+                        else if (ticks >= ppq * 0.75) dur = "q";
+                        else if (ticks >= ppq * 0.375) dur = "8";
+                        else dur = "16";
+                        return isRest ? dur + "r" : dur;
+                    };
                     
                     track.notes.forEach(note => {
+                        const gap = note.ticks - currentTick;
+                        if (gap >= ppq * 0.25) { 
+                            pattern.push({ idx: -1, dur: ticksToDur(gap, true) });
+                        }
+
                         let closestIdx = 0;
                         let minDiff = 999;
                         
                         allNotesDesc.forEach((n, idx) => {
                             const stringOffsets = [0, 64, 59, 55, 50, 45, 40]; // E4=64, B3=59, G3=55, D3=50, A2=45, E2=40
-                            const fretNum = typeof n.fret === 'number' ? n.fret : parseInt(n.fret.toString()) || 0;
+                            const fretNum = Number(n.fret) || 0;
                             const noteMidi = stringOffsets[n.str] + fretNum;
                             const diff = Math.abs(noteMidi - note.midi);
                             if (diff < minDiff) {
@@ -90,14 +107,8 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                             }
                         });
 
-                        let dur = "8";
-                        if (note.duration > 1.5) dur = "w";
-                        else if (note.duration > 0.75) dur = "h";
-                        else if (note.duration > 0.375) dur = "q";
-                        else if (note.duration > 0.18) dur = "8";
-                        else dur = "16";
-
-                        pattern.push({ idx: closestIdx, dur });
+                        pattern.push({ idx: closestIdx, dur: ticksToDur(note.durationTicks) });
+                        currentTick = note.ticks + note.durationTicks;
                     });
 
                     const newLick: AbstractLick = {
@@ -160,7 +171,15 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                             <input 
                                 type="text"
                                 value={currentLick.name}
-                                onChange={(e) => setCurrentLick({...currentLick, name: e.target.value})}
+                                onChange={(e) => {
+                                    const newName = e.target.value;
+                                    setCurrentLick({...currentLick, name: newName});
+                                    if (savedLicks.some(l => l.id === currentLick.id)) {
+                                        const updated = savedLicks.map(l => l.id === currentLick.id ? {...l, name: newName} : l);
+                                        setSavedLicks(updated);
+                                        localStorage.setItem('fretfocus_saved_licks', JSON.stringify(updated));
+                                    }
+                                }}
                                 className="bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-primary font-semibold focus:outline-none focus:border-primary/50 w-48"
                             />
                         </div>

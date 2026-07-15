@@ -799,9 +799,7 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
     return { routine, shapeData: shape };
 }
 
-function generateImprovLick(allNotesDesc: {str: number, fret: number}[]): TabNoteData[][] {
-    return mapAbstractLickToMeasures(HARDCODED_LICKS[0], allNotesDesc);
-}
+
 
 function getDailyImprovConstraints(dayOfWeek: string): string[] {
     switch (dayOfWeek) {
