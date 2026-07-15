@@ -116,10 +116,16 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
             }
         });
 
+        let originalKey = window.prompt("What key is this lick originally written in? (e.g. C, A, F#)\nThis helps us display the current key when you transpose it.", "C");
+        if (originalKey === null) return;
+        originalKey = originalKey.trim().charAt(0).toUpperCase() + originalKey.trim().slice(1);
+
         const newLick: AbstractLick = {
             id: "text_" + Date.now(),
             name: title || "Imported Text Lick",
-            pattern
+            pattern,
+            originalKey,
+            currentKey: originalKey
         };
         
         const updated = [...savedLicks, newLick];
@@ -206,10 +212,16 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                         currentTick = note.ticks + writtenDurTicks;
                     });
 
+                    let originalKey = window.prompt("What key is this MIDI file originally written in? (e.g. C, A, F#)\nThis helps us display the current key when you transpose it.", "C");
+                    if (originalKey === null) return;
+                    originalKey = originalKey.trim().charAt(0).toUpperCase() + originalKey.trim().slice(1);
+
                     const newLick: AbstractLick = {
                         id: "midi_" + Date.now(),
                         name: file.name.replace(/\.[^/.]+$/, ""),
-                        pattern
+                        pattern,
+                        originalKey,
+                        currentKey: originalKey
                     };
                     
                     const updated = [...savedLicks, newLick];
@@ -262,7 +274,21 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
             }
             return p;
         });
-        const updatedLick = { ...currentLick, pattern: newPattern };
+
+        let newCurrentKey = currentLick.currentKey;
+        if (newCurrentKey) {
+            const KEYS = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+            const flatToSharp: Record<string, string> = { 'Db': 'C#', 'Eb': 'D#', 'Gb': 'F#', 'Ab': 'G#', 'Bb': 'A#' };
+            let norm = flatToSharp[newCurrentKey] || newCurrentKey;
+            let idx = KEYS.indexOf(norm);
+            if (idx !== -1) {
+                let newIdx = (idx + amount) % 12;
+                if (newIdx < 0) newIdx += 12;
+                newCurrentKey = KEYS[newIdx];
+            }
+        }
+
+        const updatedLick = { ...currentLick, pattern: newPattern, currentKey: newCurrentKey };
         setCurrentLick(updatedLick);
         if (savedLicks.some(l => l.id === currentLick.id)) {
             const updated = savedLicks.map(l => l.id === currentLick.id ? updatedLick : l);
@@ -304,6 +330,7 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                                         onClick={() => handleTranspose(-1)}
                                         className="text-slate-300 hover:text-white px-2 py-1 font-bold rounded hover:bg-white/10 transition-colors"
                                     >-</button>
+                                    <span className="text-white text-xs font-bold px-1 w-6 text-center">{currentLick.currentKey || 'Key'}</span>
                                     <button 
                                         onClick={() => handleTranspose(1)}
                                         className="text-slate-300 hover:text-white px-2 py-1 font-bold rounded hover:bg-white/10 transition-colors"

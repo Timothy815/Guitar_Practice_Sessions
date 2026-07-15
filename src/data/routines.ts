@@ -28,6 +28,8 @@ export interface AbstractLick {
         articulation?: 'slide' | 'hammer' | 'pull' | 'bend' | 'vibrato',
         positions?: { str: number, fret: number | string }[]
     }[];
+    originalKey?: string;
+    currentKey?: string;
 }
 
 export const HARDCODED_LICKS: AbstractLick[] = [
