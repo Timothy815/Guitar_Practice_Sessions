@@ -184,8 +184,7 @@ export const HARDCODED_LICKS: AbstractLick[] = [
 ];
 
 export function mapAbstractLickToMeasures(lick: AbstractLick, allNotesDesc: {str: number, fret: number}[]): TabNoteData[][] {
-    const topNotes = allNotesDesc.filter(n => n.str <= 3);
-    if (topNotes.length === 0) return [];
+    if (allNotesDesc.length === 0) return [];
 
     const measures: TabNoteData[][] = [[]];
     let currentBeat = 0;
@@ -196,18 +195,19 @@ export function mapAbstractLickToMeasures(lick: AbstractLick, allNotesDesc: {str
         if (currentBeat + beatVal > 4.01) {
             measureIdx++;
             measures.push([]);
-            currentBeat = 0;
+            currentBeat = beatVal;
+        } else {
+            currentBeat += beatVal;
         }
-        currentBeat += beatVal;
         
         if (p.idx === -1 || p.dur.endsWith('r')) {
             measures[measureIdx].push({ duration: p.dur, positions: [] });
         } else {
-            const note = topNotes[Math.min(p.idx, topNotes.length - 1)];
+            const note = allNotesDesc[Math.min(p.idx, allNotesDesc.length - 1)];
             measures[measureIdx].push({ duration: p.dur, positions: [{str: note.str, fret: note.fret}], articulation: p.articulation });
         }
     }
-    
+
     return measures;
 }
 

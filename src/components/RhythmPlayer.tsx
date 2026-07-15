@@ -119,10 +119,7 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
             });
         }
 
-        // Metronome Click Synth
-        if (clickSynthRef.current) {
-            clickSynthRef.current.triggerAttackRelease("C6", "32n", time, 0.5);
-        }
+
 
         return durationSec;
     };
