@@ -46,7 +46,8 @@ export function JamTracksView() {
 
     // Initialize WaveSurfer
     useEffect(() => {
-        if (!waveformRef.current) return;
+        if (!waveformRef.current || !currentTrack) return;
+        if (wavesurfer.current) return; // Already initialized
         
         wavesurfer.current = WaveSurfer.create({
             container: waveformRef.current,
@@ -102,26 +103,33 @@ export function JamTracksView() {
         return () => {
             if (wavesurfer.current) {
                 wavesurfer.current.destroy();
+                wavesurfer.current = null;
+                regions.current = null;
             }
         };
-    }, []);
+    }, [currentTrack]);
 
     const selectTrack = async (file: AudioFile) => {
         try {
+            setCurrentTrack(file); // This triggers the useEffect to initialize wavesurfer if needed
+            
             const f = await file.handle.getFile();
             const url = URL.createObjectURL(f);
             
-            if (wavesurfer.current) {
-                wavesurfer.current.load(url);
-                setCurrentTrack(file);
-                setIsPlaying(false);
-                setLoopA(null);
-                setLoopB(null);
-                setIsLooping(false);
-                if (regions.current) {
-                    regions.current.clearRegions();
+            // We need to wait for wavesurfer to be initialized if it wasn't already.
+            // Using a short timeout ensures the useEffect has run.
+            setTimeout(() => {
+                if (wavesurfer.current) {
+                    wavesurfer.current.load(url);
+                    setIsPlaying(false);
+                    setLoopA(null);
+                    setLoopB(null);
+                    setIsLooping(false);
+                    if (regions.current) {
+                        regions.current.clearRegions();
+                    }
                 }
-            }
+            }, 100);
         } catch (e) {
             console.error("Failed to load audio file", e);
         }
@@ -239,27 +247,28 @@ export function JamTracksView() {
                 </div>
 
                 <div className="md:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-6">
-                    <div style={{ display: currentTrack ? 'block' : 'none' }}>
-                        <div className="text-center mb-2">
-                            <h3 className="text-xl font-bold text-gray-800">{currentTrack?.name}</h3>
-                        </div>
-                        
-                        <div className="relative border rounded-md bg-gray-50 p-2 overflow-hidden">
-                            <div ref={waveformRef} className="w-full" />
-                            <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                                <span>{formatTime(currentTime)}</span>
-                                
-                                <div className="flex items-center space-x-2">
-                                    <button onClick={() => setZoomLevel(Math.max(1, zoomLevel - 1))} className="p-1 hover:text-indigo-600"><ZoomOut size={16} /></button>
-                                    <span>Zoom: {zoomLevel}x</span>
-                                    <button onClick={() => setZoomLevel(zoomLevel + 1)} className="p-1 hover:text-indigo-600"><ZoomIn size={16} /></button>
-                                </div>
-                                
-                                <span>{formatTime(duration)}</span>
+                    {currentTrack ? (
+                        <>
+                            <div className="text-center mb-2">
+                                <h3 className="text-xl font-bold text-gray-800">{currentTrack.name}</h3>
                             </div>
-                        </div>
+                            
+                            <div className="relative border rounded-md bg-gray-50 p-2 overflow-hidden">
+                                <div ref={waveformRef} className="w-full" />
+                                <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+                                    <span>{formatTime(currentTime)}</span>
+                                    
+                                    <div className="flex items-center space-x-2">
+                                        <button onClick={() => setZoomLevel(Math.max(1, zoomLevel - 1))} className="p-1 hover:text-indigo-600"><ZoomOut size={16} /></button>
+                                        <span>Zoom: {zoomLevel}x</span>
+                                        <button onClick={() => setZoomLevel(zoomLevel + 1)} className="p-1 hover:text-indigo-600"><ZoomIn size={16} /></button>
+                                    </div>
+                                    
+                                    <span>{formatTime(duration)}</span>
+                                </div>
+                            </div>
 
-                        <div className="flex flex-col space-y-2 mt-6">
+                            <div className="flex flex-col space-y-2 mt-6">
                             <input 
                                 type="range" 
                                 min={0} 
@@ -393,9 +402,8 @@ export function JamTracksView() {
                                 </p>
                             </div>
                         </div>
-                    </div>
-
-                    {!currentTrack && (
+                    </>
+                    ) : (
                         <div className="h-64 flex flex-col items-center justify-center text-gray-400">
                             <Repeat size={48} className="mb-4 opacity-50" />
                             <p>Select a track to start jamming</p>
