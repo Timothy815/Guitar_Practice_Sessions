@@ -109,22 +109,27 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                             pattern.push({ idx: -1, dur: ticksToDur(gap, true) });
                         }
 
-                        let closestIdx = 0;
-                        let minDiff = 999;
-                        
-                        allNotesDesc.forEach((n, idx) => {
-                            const stringOffsets = [0, 64, 59, 55, 50, 45, 40]; // E4=64, B3=59, G3=55, D3=50, A2=45, E2=40
-                            const fretNum = Number(n.fret) || 0;
-                            const noteMidi = stringOffsets[n.str] + fretNum;
-                            const diff = Math.abs(noteMidi - note.midi);
-                            if (diff < minDiff) {
-                                minDiff = diff;
-                                closestIdx = idx;
+                        let bestStr = 1;
+                        let bestFret = note.midi - 64; // Fallback for very high notes (above E4)
+                        if (bestFret < 0) {
+                            const stringOffsets = [0, 64, 59, 55, 50, 45, 40];
+                            for (let s = 1; s <= 6; s++) {
+                                const f = note.midi - stringOffsets[s];
+                                if (f >= 0 && f <= 15) { // Prefer frets in playable range 0-15
+                                    bestStr = s;
+                                    bestFret = f;
+                                    break;
+                                }
                             }
-                        });
+                        }
 
                         const writtenDurTicks = Math.min(note.durationTicks, stepTicks);
-                        pattern.push({ idx: closestIdx, dur: ticksToDur(writtenDurTicks) });
+                        pattern.push({ 
+                            idx: 0, // Unused since str/fret are absolute
+                            str: bestStr,
+                            fret: Math.max(0, bestFret),
+                            dur: ticksToDur(writtenDurTicks) 
+                        });
                         currentTick = note.ticks + writtenDurTicks;
                     });
 
