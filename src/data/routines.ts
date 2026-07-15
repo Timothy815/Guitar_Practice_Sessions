@@ -15,6 +15,244 @@ export interface Exercise {
     focusPoints?: string[];
     vexflowMeasures?: TabNoteData[][];
     dynamic?: boolean;
+    allNotesDesc?: {str: number, fret: number}[];
+}
+
+export interface AbstractLick {
+    id: string;
+    name: string;
+    category?: 'Short' | 'Medium' | 'Long';
+    pattern: { idx: number, dur: string, articulation?: 'slide' | 'hammer' | 'pull' | 'bend' | 'vibrato' }[];
+}
+
+export const HARDCODED_LICKS: AbstractLick[] = [
+    // --- SHORT LICKS (1 Measure usually) ---
+    {
+        id: "short_1",
+        name: "Quick Bend Resolution",
+        category: "Short",
+        pattern: [
+            { idx: 2, dur: "q", articulation: "bend" }, 
+            { idx: 0, dur: "8" }, 
+            { idx: 1, dur: "8" }, 
+            { idx: 2, dur: "h", articulation: "vibrato" }
+        ]
+    },
+    {
+        id: "short_2",
+        name: "Triplet Burst",
+        category: "Short",
+        pattern: [
+            { idx: -1, dur: "8r" },
+            { idx: 3, dur: "16" }, { idx: 2, dur: "16" }, { idx: 1, dur: "16" }, { idx: 0, dur: "16" },
+            { idx: 1, dur: "q" }, { idx: 4, dur: "q", articulation: "vibrato" }
+        ]
+    },
+    {
+        id: "short_3",
+        name: "Double Stop Tease",
+        category: "Short",
+        pattern: [
+            { idx: 0, dur: "8" }, { idx: 2, dur: "8" },
+            { idx: 0, dur: "8" }, { idx: 2, dur: "8" },
+            { idx: 1, dur: "h", articulation: "vibrato" }
+        ]
+    },
+    {
+        id: "short_4",
+        name: "Staccato Walk",
+        category: "Short",
+        pattern: [
+            { idx: 4, dur: "8" }, { idx: -1, dur: "8r" },
+            { idx: 3, dur: "8" }, { idx: -1, dur: "8r" },
+            { idx: 1, dur: "q" }, { idx: 0, dur: "q" }
+        ]
+    },
+    {
+        id: "short_5",
+        name: "The Slur",
+        category: "Short",
+        pattern: [
+            { idx: 1, dur: "8", articulation: "hammer" }, { idx: 0, dur: "8" },
+            { idx: 2, dur: "8", articulation: "pull" }, { idx: 3, dur: "8" },
+            { idx: 4, dur: "h", articulation: "vibrato" }
+        ]
+    },
+
+    // --- MEDIUM LICKS (2 Measures usually) ---
+    {
+        id: "classic_turnaround",
+        name: "Classic Turnaround",
+        category: "Medium",
+        pattern: [
+            { idx: 0, dur: "8" }, { idx: 1, dur: "8" }, { idx: 2, dur: "8" }, { idx: 0, dur: "8" },
+            { idx: 3, dur: "q" }, { idx: 1, dur: "8" }, { idx: 2, dur: "8" },
+            { idx: 4, dur: "q" }, { idx: -1, dur: "qr" }, { idx: -1, dur: "hr" }
+        ]
+    },
+    {
+        id: "bb_box",
+        name: "The B.B. Box",
+        category: "Medium",
+        pattern: [
+            { idx: 2, dur: "8", articulation: "bend" }, { idx: -1, dur: "8r" }, { idx: 0, dur: "8" }, { idx: 1, dur: "8" },
+            { idx: 2, dur: "q" }, { idx: 4, dur: "q", articulation: "vibrato" },
+            { idx: 0, dur: "h" }, { idx: -1, dur: "hr" }
+        ]
+    },
+    {
+        id: "syncopated_run",
+        name: "Syncopated Run",
+        category: "Medium",
+        pattern: [
+            { idx: -1, dur: "8r" }, { idx: 5, dur: "8" }, { idx: 4, dur: "8" }, { idx: 3, dur: "8" },
+            { idx: 2, dur: "q" }, { idx: 1, dur: "8" }, { idx: 0, dur: "8" },
+            { idx: 1, dur: "h", articulation: "vibrato" }, { idx: -1, dur: "hr" }
+        ]
+    },
+    {
+        id: "med_1",
+        name: "Pentatonic Walkup",
+        category: "Medium",
+        pattern: [
+            { idx: 5, dur: "8" }, { idx: 4, dur: "8" }, { idx: 3, dur: "8" }, { idx: 2, dur: "8" },
+            { idx: 1, dur: "8" }, { idx: 0, dur: "8" }, { idx: 1, dur: "q" },
+            { idx: 2, dur: "h", articulation: "bend" }, { idx: -1, dur: "hr" }
+        ]
+    },
+    {
+        id: "med_2",
+        name: "Hesitation Blues",
+        category: "Medium",
+        pattern: [
+            { idx: 1, dur: "q", articulation: "bend" }, { idx: -1, dur: "qr" },
+            { idx: 1, dur: "q", articulation: "bend" }, { idx: -1, dur: "qr" },
+            { idx: 0, dur: "8" }, { idx: 2, dur: "8" }, { idx: 3, dur: "8" }, { idx: 1, dur: "8" },
+            { idx: 4, dur: "h", articulation: "vibrato" }
+        ]
+    },
+
+    // --- LONG LICKS (3-4 Measures) ---
+    {
+        id: "long_1",
+        name: "The Storyteller",
+        category: "Long",
+        pattern: [
+            // Bar 1
+            { idx: 4, dur: "8" }, { idx: 3, dur: "8" }, { idx: 4, dur: "q" }, { idx: -1, dur: "hr" },
+            // Bar 2
+            { idx: 4, dur: "8" }, { idx: 3, dur: "8" }, { idx: 2, dur: "q" }, { idx: -1, dur: "hr" },
+            // Bar 3
+            { idx: 2, dur: "8" }, { idx: 1, dur: "8" }, { idx: 0, dur: "8" }, { idx: 1, dur: "8" },
+            { idx: 2, dur: "8" }, { idx: 3, dur: "8" }, { idx: 4, dur: "q" },
+            // Bar 4
+            { idx: 0, dur: "h", articulation: "vibrato" }, { idx: -1, dur: "hr" }
+        ]
+    },
+    {
+        id: "long_2",
+        name: "Shred Sequence",
+        category: "Long",
+        pattern: [
+            // Bar 1 - 16ths
+            { idx: 0, dur: "16" }, { idx: 1, dur: "16" }, { idx: 2, dur: "16" }, { idx: 3, dur: "16" },
+            { idx: 1, dur: "16" }, { idx: 2, dur: "16" }, { idx: 3, dur: "16" }, { idx: 4, dur: "16" },
+            { idx: 2, dur: "16" }, { idx: 3, dur: "16" }, { idx: 4, dur: "16" }, { idx: 5, dur: "16" },
+            { idx: 3, dur: "q" },
+            // Bar 2 - Climb up
+            { idx: 5, dur: "8" }, { idx: 4, dur: "8" }, { idx: 3, dur: "8" }, { idx: 2, dur: "8" },
+            { idx: 1, dur: "8" }, { idx: 0, dur: "8" }, { idx: 1, dur: "q", articulation: "bend" },
+            // Bar 3 - Resolve
+            { idx: 0, dur: "w", articulation: "vibrato" }
+        ]
+    },
+    {
+        id: "long_3",
+        name: "Call and Response",
+        category: "Long",
+        pattern: [
+            // Bar 1 - Call
+            { idx: 2, dur: "q", articulation: "bend" }, { idx: 0, dur: "q" }, 
+            { idx: 1, dur: "h", articulation: "vibrato" },
+            // Bar 2 - Wait
+            { idx: -1, dur: "w" },
+            // Bar 3 - Response
+            { idx: 2, dur: "q", articulation: "bend" }, { idx: 4, dur: "q" }, 
+            { idx: 5, dur: "h", articulation: "vibrato" }
+        ]
+    }
+];
+
+export function mapAbstractLickToMeasures(lick: AbstractLick, allNotesDesc: {str: number, fret: number}[]): TabNoteData[][] {
+    const topNotes = allNotesDesc.filter(n => n.str <= 3);
+    if (topNotes.length === 0) return [];
+
+    const measures: TabNoteData[][] = [[]];
+    let currentBeat = 0;
+    let measureIdx = 0;
+
+    for (const p of lick.pattern) {
+        const beatVal = p.dur.includes("16") ? 0.25 : p.dur.includes("8") ? 0.5 : p.dur.includes("h") ? 2 : p.dur.includes("w") ? 4 : 1;
+        if (currentBeat + beatVal > 4.01) {
+            measureIdx++;
+            measures.push([]);
+            currentBeat = 0;
+        }
+        currentBeat += beatVal;
+        
+        if (p.idx === -1 || p.dur.endsWith('r')) {
+            measures[measureIdx].push({ duration: p.dur, positions: [] });
+        } else {
+            const note = topNotes[Math.min(p.idx, topNotes.length - 1)];
+            measures[measureIdx].push({ duration: p.dur, positions: [{str: note.str, fret: note.fret}], articulation: p.articulation });
+        }
+    }
+    
+    return measures;
+}
+
+export function generateProceduralLick(): AbstractLick {
+    const pattern: any[] = [];
+    let currentBeat = 0;
+    
+    while (currentBeat < 8) {
+        const durRoll = Math.random();
+        let dur = "8";
+        let beatVal = 0.5;
+        let isRest = false;
+        
+        if (durRoll < 0.2) { dur = "q"; beatVal = 1; }
+        else if (durRoll < 0.6) { dur = "8"; beatVal = 0.5; }
+        else if (durRoll < 0.8) { dur = "16"; beatVal = 0.25; }
+        else { dur = "8r"; beatVal = 0.5; isRest = true; }
+        
+        if (currentBeat + beatVal > 8) {
+            beatVal = 8 - currentBeat;
+            dur = beatVal === 1 ? "q" : beatVal === 0.5 ? "8" : beatVal === 0.25 ? "16" : "h";
+            isRest = false; 
+        }
+        
+        let idx = -1;
+        let articulation = undefined;
+        
+        if (!isRest) {
+            idx = Math.floor(Math.random() * 6);
+            if (dur === "q" || dur === "h") {
+                const artRoll = Math.random();
+                if (artRoll < 0.3) articulation = "vibrato";
+                else if (artRoll < 0.5) articulation = "bend";
+            }
+        }
+        
+        pattern.push({ idx, dur, articulation });
+        currentBeat += beatVal;
+    }
+    
+    return {
+        id: "gen_" + Date.now().toString(),
+        name: "Procedural Lick",
+        pattern
+    };
 }
 
 export interface Technique {
@@ -553,8 +791,8 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
             duration: 300,
             description: `Improvise over a backing track in ${key} ${quality} using ONLY ${shape.name}. Do not noodle endlessly. Apply strict constraints to force creativity.`,
             focusPoints: getDailyImprovConstraints(dayOfWeek),
-            // Generate a more musical lick instead of just descending notes
-            vexflowMeasures: generateImprovLick(allNotesDesc)
+            allNotesDesc, // Pass down to the LickGenerator component
+            vexflowMeasures: []
         }
     ];
 
@@ -562,52 +800,7 @@ export function generateRoutine(key: string, family: ScaleFamily, quality: Scale
 }
 
 function generateImprovLick(allNotesDesc: {str: number, fret: number}[]): TabNoteData[][] {
-    // Filter to top 3 strings for a lead lick
-    const topNotes = allNotesDesc.filter(n => n.str <= 3);
-    if (topNotes.length < 5) {
-        return chunkIntoMeasures(topNotes); // fallback
-    }
-    
-    // Create a bluesy / melodic sequence pattern rather than straight down
-    // Indices relative to the highest note in the shape (0 is highest)
-    // A nice pattern: 0, 1, 2, 0  -  3, 1, 2, 4 (with varying rhythms)
-    const pattern = [
-        { idx: 0, dur: "8" },
-        { idx: 1, dur: "8" },
-        { idx: 2, dur: "8" },
-        { idx: 0, dur: "8" },
-        
-        { idx: 3, dur: "q" },
-        { idx: 1, dur: "8" },
-        { idx: 2, dur: "8" },
-        
-        { idx: 4, dur: "q" },
-        { idx: -1, dur: "qr" }, // rest
-        { idx: -1, dur: "hr" } // rest
-    ];
-    
-    const measures: TabNoteData[][] = [[], []];
-    let currentBeat = 0;
-    let measureIdx = 0;
-    
-    for (const p of pattern) {
-        const beatVal = p.dur.includes("16") ? 0.25 : p.dur.includes("8") ? 0.5 : p.dur.includes("h") ? 2 : p.dur.includes("w") ? 4 : 1;
-        if (currentBeat + beatVal > 4.01) {
-            measureIdx++;
-            currentBeat = 0;
-            if (measureIdx >= 2) break;
-        }
-        currentBeat += beatVal;
-        
-        if (p.idx === -1) {
-            measures[measureIdx].push({ duration: p.dur, positions: [] });
-        } else {
-            const note = topNotes[Math.min(p.idx, topNotes.length - 1)];
-            measures[measureIdx].push({ duration: p.dur, positions: [{str: note.str, fret: note.fret}] });
-        }
-    }
-    
-    return measures;
+    return mapAbstractLickToMeasures(HARDCODED_LICKS[0], allNotesDesc);
 }
 
 function getDailyImprovConstraints(dayOfWeek: string): string[] {

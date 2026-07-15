@@ -5,6 +5,7 @@ import Fretboard from './Fretboard';
 import ChordDiagram from './ChordDiagram';
 import RhythmPlayer from './RhythmPlayer';
 import JamPlayer from './JamPlayer';
+import LickGenerator from './LickGenerator';
 import { Play, Pause, ChevronRight, ChevronLeft, Eye, EyeOff } from 'lucide-react';
 
 interface ExercisePlayerProps {
@@ -193,12 +194,18 @@ export default function ExercisePlayer({
                             </div>
                         )}
 
-                        {exercise.vexflowMeasures && (
+                        {exercise.id === 'improv' && exercise.allNotesDesc ? (
                             <>
-                                {exercise.id === 'improv' && <JamPlayer shapeData={shapeData} />}
-                                <RhythmPlayer measures={exercise.vexflowMeasures} />
-                                <VexFlowTab measures={exercise.vexflowMeasures} />
+                                <JamPlayer shapeData={shapeData} />
+                                <LickGenerator allNotesDesc={exercise.allNotesDesc} />
                             </>
+                        ) : (
+                            exercise.vexflowMeasures && (
+                                <>
+                                    <RhythmPlayer measures={exercise.vexflowMeasures} />
+                                    <VexFlowTab measures={exercise.vexflowMeasures} />
+                                </>
+                            )
                         )}
                     </div>
                 )}
