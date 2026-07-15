@@ -766,49 +766,95 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
         }
     };
 
-    const handleMidiUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleCustomUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
         try {
-            const arrayBuffer = await file.arrayBuffer();
-            const midi = new Midi(arrayBuffer);
-            
-            const track = midi.tracks.find(t => t.notes.length > 0);
-            if (!track) {
-                alert("No notes found in this MIDI file.");
-                return;
-            }
-            
-            // Collect all unique times with 0.01s tolerance
-            const times: number[] = [];
-            track.notes.forEach(n => {
-                if (!times.find(t => Math.abs(t - n.time) < 0.01)) {
-                    times.push(n.time);
-                }
-            });
-            times.sort((a, b) => a - b);
-            
-            const steps: any[] = [];
-            const originalBpm = midi.header.tempos[0]?.bpm || 120;
-            const secondsPerBeat = 60.0 / originalBpm;
-            
-            for (let i = 0; i < times.length; i++) {
-                const time = times[i];
-                const nextTime = i < times.length - 1 ? times[i+1] : time + 0.5;
-                const durSeconds = nextTime - time;
-                const beats = durSeconds / secondsPerBeat;
+            let steps: any[] = [];
+            let originalBpm = 120;
+            const isText = file.name.toLowerCase().endsWith('.txt') || file.name.toLowerCase().endsWith('.md');
+
+            if (isText) {
+                const text = await file.text();
+                const tokens = text.replace(/\|/g, ',').split(',').map(s => s.trim()).filter(s => s.length > 0);
                 
-                const notesAtTime = track.notes.filter(n => Math.abs(n.time - time) < 0.01);
-                
-                steps.push({
-                    midiNotes: notesAtTime.map(n => n.midi),
-                    absoluteBeatValue: beats,
-                    velocity: notesAtTime[0].velocity || 0.8
+                tokens.forEach(token => {
+                    if (token === 'x' || token === '') {
+                        steps.push({ midiNotes: [], absoluteBeatValue: 1, velocity: 0 });
+                        return;
+                    }
+
+                    const parts = token.split(':');
+                    const notesPart = parts[0];
+                    let durPart = parts[1] || 'q';
+                    
+                    let baseVal = durPart.includes('s') ? 0.25 : durPart.includes('e') ? 0.5 : durPart.includes('h') ? 2 : durPart.includes('w') ? 4 : 1;
+                    const isDotted = durPart.includes('.');
+                    const beats = isDotted ? baseVal * 1.5 : baseVal;
+
+                    if (notesPart === 'x' || notesPart.toLowerCase() === 'r') {
+                        steps.push({ midiNotes: [], absoluteBeatValue: beats, velocity: 0 });
+                        return;
+                    }
+
+                    const chordNotes = notesPart.split('+');
+                    const midiNotes: number[] = [];
+
+                    chordNotes.forEach(cn => {
+                        const match = cn.match(/^([0-9]+|m)\/([1-6])(x?)$/i);
+                        if (match && match[1].toLowerCase() !== 'm') {
+                            const fretVal = parseInt(match[1], 10);
+                            const strVal = parseInt(match[2], 10) as keyof typeof STRING_MIDI_BASE;
+                            midiNotes.push((STRING_MIDI_BASE[strVal] || 40) + fretVal);
+                        }
+                    });
+
+                    steps.push({
+                        midiNotes,
+                        absoluteBeatValue: beats,
+                        velocity: 0.8
+                    });
                 });
+            } else {
+                const arrayBuffer = await file.arrayBuffer();
+                const midi = new Midi(arrayBuffer);
+                
+                const track = midi.tracks.find(t => t.notes.length > 0);
+                if (!track) {
+                    alert("No notes found in this MIDI file.");
+                    return;
+                }
+                
+                // Collect all unique times with 0.01s tolerance
+                const times: number[] = [];
+                track.notes.forEach(n => {
+                    if (!times.find(t => Math.abs(t - n.time) < 0.01)) {
+                        times.push(n.time);
+                    }
+                });
+                times.sort((a, b) => a - b);
+                
+                originalBpm = midi.header.tempos[0]?.bpm || 120;
+                const secondsPerBeat = 60.0 / originalBpm;
+                
+                for (let i = 0; i < times.length; i++) {
+                    const time = times[i];
+                    const nextTime = i < times.length - 1 ? times[i+1] : time + 0.5;
+                    const durSeconds = nextTime - time;
+                    const beats = durSeconds / secondsPerBeat;
+                    
+                    const notesAtTime = track.notes.filter(n => Math.abs(n.time - time) < 0.01);
+                    
+                    steps.push({
+                        midiNotes: notesAtTime.map(n => n.midi),
+                        absoluteBeatValue: beats,
+                        velocity: notesAtTime[0].velocity || 0.8
+                    });
+                }
             }
             
-            let originalKey = window.prompt("What key is this MIDI file originally written in? (e.g. C, A, F#)\nWe will use this to automatically transpose the track when you change practice keys.", shapeData.key);
+            let originalKey = window.prompt("What key is this file originally written in? (e.g. C, A, F#)\nWe will use this to automatically transpose the track when you change practice keys.", shapeData.key);
             if (originalKey === null) return;
             originalKey = originalKey.trim().charAt(0).toUpperCase() + originalKey.trim().slice(1);
             if (!(ROOT_MIDI as any)[originalKey]) {
@@ -817,7 +863,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
 
             const newJam = {
                 id: `custom_jam_${Date.now()}`,
-                name: file.name.replace('.mid', '').replace('.midi', ''),
+                name: file.name.replace(/\.[^/.]+$/, ""),
                 style: 'raw_midi',
                 bpm: Math.round(originalBpm),
                 originalKey: originalKey,
@@ -829,10 +875,10 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
             localStorage.setItem('fretfocus_custom_jams', JSON.stringify(updatedJams));
             setProgId(newJam.id);
             setBpm(newJam.bpm);
-            alert('MIDI imported successfully! You can find it in your Custom Jams.');
+            alert('File imported successfully! You can find it in your Custom Jams.');
         } catch (error) {
             console.error(error);
-            alert("Failed to parse MIDI file.");
+            alert("Failed to parse file.");
         }
     };
 
@@ -883,10 +929,10 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                     <div className="text-xs text-indigo-300 uppercase tracking-wider mb-1 font-bold flex items-center justify-between w-full">
                         <span className="flex items-center gap-2"><Music className="w-3 h-3" /> Chord Progression</span>
                         <div className="flex gap-2 items-center">
-                            <label className="cursor-pointer flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors" title="Upload MIDI File">
-                                <Upload className="w-3.5 h-3.5" />
-                                <span className="text-[10px]">Import MIDI</span>
-                                <input type="file" accept=".mid,.midi" className="hidden" onChange={handleMidiUpload} />
+                            <label className="cursor-pointer flex items-center gap-1 text-emerald-400 hover:text-emerald-300 transition-colors" title="Upload MIDI or Text File">
+                                <Upload size={14} />
+                                <span className="text-[10px]">Import Jam</span>
+                                <input type="file" accept=".mid,.midi,.txt,.md" className="hidden" onChange={handleCustomUpload} />
                             </label>
                             {progId.startsWith('custom_jam_') && (
                                 <button onClick={handleDeleteCustomJam} className="text-red-400 hover:text-red-300 transition-colors" title="Delete Custom Jam">
