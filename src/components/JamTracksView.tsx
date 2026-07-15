@@ -319,7 +319,7 @@ export function JamTracksView() {
                                 </div>
                                 <input 
                                     type="range" 
-                                    min={0.5} 
+                                    min={0.1} 
                                     max={1.5} 
                                     step={0.01} 
                                     value={tempo} 
