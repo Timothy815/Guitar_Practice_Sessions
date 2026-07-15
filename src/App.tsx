@@ -7,6 +7,7 @@ import ChordDiagram from './components/ChordDiagram';
 import CurriculumView from './components/CurriculumView';
 import ChordSandboxView from './components/ChordSandboxView';
 import DrillsView from './components/DrillsView';
+import { JamTracksView } from './components/JamTracksView';
 import { generateRoutine, techniques } from './data/routines';
 import { KEY_OFFSETS } from './data/musicEngine';
 import type { ScaleFamily, ScaleQuality } from './data/musicEngine';
@@ -14,7 +15,7 @@ import type { CurriculumConfig } from './data/curriculum';
 import { Guitar, Printer, Map as MapIcon, Settings2, ListMusic, Zap } from 'lucide-react';
 
 export default function App() {
-    const [viewMode, setViewMode] = useState<'curriculum' | 'sandbox' | 'chords' | 'drills'>('curriculum');
+    const [viewMode, setViewMode] = useState<'curriculum' | 'sandbox' | 'chords' | 'drills' | 'tracks'>('curriculum');
     const [currentStepIndex, setCurrentStepIndex] = useState(0);
     const [dayOfWeek, setDayOfWeek] = useState<string>("Monday");
     const [key, setKey] = useState("A");
@@ -81,6 +82,12 @@ export default function App() {
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'drills' ? 'bg-amber-500 text-black shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
                         >
                             <Zap className="w-4 h-4" /> Drills
+                        </button>
+                        <button 
+                            onClick={() => setViewMode('tracks')}
+                            className={`flex items-center gap-2 px-4 py-2 rounded-lg text-sm font-bold transition-all ${viewMode === 'tracks' ? 'bg-emerald-500 text-white shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}
+                        >
+                            <ListMusic className="w-4 h-4" /> Tracks
                         </button>
                     </div>
                 </div>
@@ -154,6 +161,8 @@ export default function App() {
                 />
             ) : viewMode === 'drills' ? (
                 <DrillsView />
+            ) : viewMode === 'tracks' ? (
+                <JamTracksView />
             ) : (
                 <>
                     {/* Print Header */}
