@@ -49,8 +49,12 @@ export function JamTracksView() {
         if (!waveformRef.current || !currentTrack) return;
         if (wavesurfer.current) return; // Already initialized
         
+        const audio = new Audio();
+        audio.preservesPitch = true;
+        
         wavesurfer.current = WaveSurfer.create({
             container: waveformRef.current,
+            media: audio,
             waveColor: '#a5b4fc',
             progressColor: '#4f46e5',
             cursorColor: '#4f46e5',
@@ -58,6 +62,7 @@ export function JamTracksView() {
             barGap: 1,
             barRadius: 2,
             height: 120,
+            backend: 'MediaElement'
         });
 
         regions.current = wavesurfer.current.registerPlugin(RegionsPlugin.create());
