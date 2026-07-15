@@ -87,7 +87,23 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                         return isRest ? dur + "r" : dur;
                     };
                     
+                    // 1. Filter out chords (notes starting at exact same time). Keep highest pitch.
+                    const monophonicNotes: any[] = [];
                     track.notes.forEach(note => {
+                        if (monophonicNotes.length > 0 && monophonicNotes[monophonicNotes.length - 1].ticks === note.ticks) {
+                            if (note.midi > monophonicNotes[monophonicNotes.length - 1].midi) {
+                                monophonicNotes[monophonicNotes.length - 1] = note;
+                            }
+                        } else {
+                            monophonicNotes.push(note);
+                        }
+                    });
+                    
+                    // 2. Map notes sequentially, resolving overlaps and rests
+                    monophonicNotes.forEach((note, i) => {
+                        const nextNote = monophonicNotes[i + 1];
+                        const stepTicks = nextNote ? (nextNote.ticks - note.ticks) : note.durationTicks;
+                        
                         const gap = note.ticks - currentTick;
                         if (gap >= ppq * 0.25) { 
                             pattern.push({ idx: -1, dur: ticksToDur(gap, true) });
@@ -107,8 +123,9 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                             }
                         });
 
-                        pattern.push({ idx: closestIdx, dur: ticksToDur(note.durationTicks) });
-                        currentTick = note.ticks + note.durationTicks;
+                        const writtenDurTicks = Math.min(note.durationTicks, stepTicks);
+                        pattern.push({ idx: closestIdx, dur: ticksToDur(writtenDurTicks) });
+                        currentTick = note.ticks + writtenDurTicks;
                     });
 
                     const newLick: AbstractLick = {
