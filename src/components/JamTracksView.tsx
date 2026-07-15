@@ -239,163 +239,163 @@ export function JamTracksView() {
                 </div>
 
                 <div className="md:col-span-2 bg-white p-6 rounded-lg shadow-sm border border-gray-100 space-y-6">
-                    {currentTrack ? (
-                        <>
-                            <div className="text-center mb-2">
-                                <h3 className="text-xl font-bold text-gray-800">{currentTrack.name}</h3>
-                            </div>
-                            
-                            <div className="relative border rounded-md bg-gray-50 p-2 overflow-hidden">
-                                <div ref={waveformRef} className="w-full" />
-                                <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
-                                    <span>{formatTime(currentTime)}</span>
-                                    
-                                    <div className="flex items-center space-x-2">
-                                        <button onClick={() => setZoomLevel(Math.max(1, zoomLevel - 1))} className="p-1 hover:text-indigo-600"><ZoomOut size={16} /></button>
-                                        <span>Zoom: {zoomLevel}x</span>
-                                        <button onClick={() => setZoomLevel(zoomLevel + 1)} className="p-1 hover:text-indigo-600"><ZoomIn size={16} /></button>
-                                    </div>
-                                    
-                                    <span>{formatTime(duration)}</span>
+                    <div style={{ display: currentTrack ? 'block' : 'none' }}>
+                        <div className="text-center mb-2">
+                            <h3 className="text-xl font-bold text-gray-800">{currentTrack?.name}</h3>
+                        </div>
+                        
+                        <div className="relative border rounded-md bg-gray-50 p-2 overflow-hidden">
+                            <div ref={waveformRef} className="w-full" />
+                            <div className="flex justify-between items-center mt-2 text-xs text-gray-500">
+                                <span>{formatTime(currentTime)}</span>
+                                
+                                <div className="flex items-center space-x-2">
+                                    <button onClick={() => setZoomLevel(Math.max(1, zoomLevel - 1))} className="p-1 hover:text-indigo-600"><ZoomOut size={16} /></button>
+                                    <span>Zoom: {zoomLevel}x</span>
+                                    <button onClick={() => setZoomLevel(zoomLevel + 1)} className="p-1 hover:text-indigo-600"><ZoomIn size={16} /></button>
                                 </div>
+                                
+                                <span>{formatTime(duration)}</span>
                             </div>
+                        </div>
 
-                            <div className="flex flex-col space-y-2">
+                        <div className="flex flex-col space-y-2 mt-6">
+                            <input 
+                                type="range" 
+                                min={0} 
+                                max={duration || 100} 
+                                step={0.01}
+                                value={currentTime} 
+                                onChange={handleSeek}
+                                className="w-full accent-indigo-600 cursor-pointer"
+                            />
+                        </div>
+
+                        <div className="flex justify-center items-center space-x-6 mt-6">
+                            <button 
+                                onClick={() => {
+                                    if (wavesurfer.current) wavesurfer.current.setTime(0);
+                                }}
+                                className="p-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition"
+                            >
+                                <SkipBack size={24} />
+                            </button>
+                            
+                            <button 
+                                onClick={togglePlay}
+                                className="p-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-md"
+                            >
+                                {isPlaying ? <Pause size={32} /> : <Play size={32} className="ml-1" />}
+                            </button>
+                            
+                            <button 
+                                onClick={() => setIsLooping(!isLooping)}
+                                className={`p-3 rounded-full transition ${isLooping ? 'bg-indigo-100 text-indigo-600 shadow-inner' : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600'}`}
+                                title="Toggle A-B Loop"
+                            >
+                                <Repeat size={24} />
+                            </button>
+                        </div>
+
+                        <div className="bg-gray-50 p-4 rounded-lg space-y-4 mt-6">
+                            <div>
+                                <div className="flex justify-between mb-1">
+                                    <span className="text-sm font-medium text-gray-700">Playback Speed (Tempo)</span>
+                                    <span className="text-sm font-bold text-indigo-600">{Math.round(tempo * 100)}%</span>
+                                </div>
                                 <input 
                                     type="range" 
-                                    min={0} 
-                                    max={duration || 100} 
-                                    step={0.01}
-                                    value={currentTime} 
-                                    onChange={handleSeek}
+                                    min={0.5} 
+                                    max={1.5} 
+                                    step={0.01} 
+                                    value={tempo} 
+                                    onChange={e => setTempo(parseFloat(e.target.value))}
                                     className="w-full accent-indigo-600 cursor-pointer"
                                 />
+                                <p className="text-xs text-gray-500 mt-1">Pitch is automatically preserved when slowing down.</p>
                             </div>
-
-                            <div className="flex justify-center items-center space-x-6">
-                                <button 
-                                    onClick={() => {
-                                        if (wavesurfer.current) wavesurfer.current.setTime(0);
-                                    }}
-                                    className="p-3 text-gray-600 hover:text-indigo-600 hover:bg-indigo-50 rounded-full transition"
-                                >
-                                    <SkipBack size={24} />
-                                </button>
-                                
-                                <button 
-                                    onClick={togglePlay}
-                                    className="p-4 bg-indigo-600 text-white rounded-full hover:bg-indigo-700 transition shadow-md"
-                                >
-                                    {isPlaying ? <Pause size={32} /> : <Play size={32} className="ml-1" />}
-                                </button>
-                                
-                                <button 
-                                    onClick={() => setIsLooping(!isLooping)}
-                                    className={`p-3 rounded-full transition ${isLooping ? 'bg-indigo-100 text-indigo-600 shadow-inner' : 'text-gray-600 hover:bg-gray-50 hover:text-indigo-600'}`}
-                                    title="Toggle A-B Loop"
-                                >
-                                    <Repeat size={24} />
-                                </button>
-                            </div>
-
-                            <div className="bg-gray-50 p-4 rounded-lg space-y-4">
-                                <div>
-                                    <div className="flex justify-between mb-1">
-                                        <span className="text-sm font-medium text-gray-700">Playback Speed (Tempo)</span>
-                                        <span className="text-sm font-bold text-indigo-600">{Math.round(tempo * 100)}%</span>
-                                    </div>
-                                    <input 
-                                        type="range" 
-                                        min={0.5} 
-                                        max={1.5} 
-                                        step={0.01} 
-                                        value={tempo} 
-                                        onChange={e => setTempo(parseFloat(e.target.value))}
-                                        className="w-full accent-indigo-600 cursor-pointer"
-                                    />
-                                    <p className="text-xs text-gray-500 mt-1">Pitch is automatically preserved when slowing down.</p>
+                            
+                            <div className="border-t pt-4">
+                                <div className="flex justify-between items-center mb-3">
+                                    <span className="text-sm font-medium text-gray-700">A-B Looping</span>
+                                    {isLooping && (
+                                        <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full font-semibold animate-pulse">Looping Active</span>
+                                    )}
                                 </div>
-                                
-                                <div className="border-t pt-4">
-                                    <div className="flex justify-between items-center mb-3">
-                                        <span className="text-sm font-medium text-gray-700">A-B Looping</span>
-                                        {isLooping && (
-                                            <span className="text-xs px-2 py-1 bg-indigo-100 text-indigo-700 rounded-full font-semibold animate-pulse">Looping Active</span>
-                                        )}
-                                    </div>
-                                    <div className="flex flex-col gap-3">
-                                        <div className="flex items-center gap-2">
-                                            <button 
-                                                onClick={() => {
-                                                    setLoopA(currentTime);
-                                                    if (loopB === null || currentTime >= loopB) setLoopB(duration);
-                                                    setIsLooping(true);
-                                                }}
-                                                className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 w-28 whitespace-nowrap"
-                                            >
-                                                Set Point A
-                                            </button>
-                                            <input 
-                                                type="number"
-                                                min={0}
-                                                step={0.001}
-                                                value={loopA !== null ? loopA.toFixed(3) : ''}
-                                                placeholder="e.g. 1.250"
-                                                onChange={(e) => {
-                                                    const val = parseFloat(e.target.value);
-                                                    if (!isNaN(val)) {
-                                                        setLoopA(val);
-                                                        setIsLooping(true);
-                                                    }
-                                                }}
-                                                className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm"
-                                            />
-                                            <span className="text-xs text-gray-500 w-8">sec</span>
-                                        </div>
-                                        
-                                        <div className="flex items-center gap-2">
-                                            <button 
-                                                onClick={() => {
-                                                    setLoopB(currentTime);
-                                                    if (loopA === null || currentTime <= loopA) setLoopA(0);
-                                                    setIsLooping(true);
-                                                }}
-                                                className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 w-28 whitespace-nowrap"
-                                            >
-                                                Set Point B
-                                            </button>
-                                            <input 
-                                                type="number"
-                                                min={0}
-                                                step={0.001}
-                                                value={loopB !== null ? loopB.toFixed(3) : ''}
-                                                placeholder="e.g. 10.500"
-                                                onChange={(e) => {
-                                                    const val = parseFloat(e.target.value);
-                                                    if (!isNaN(val)) {
-                                                        setLoopB(val);
-                                                        setIsLooping(true);
-                                                    }
-                                                }}
-                                                className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm"
-                                            />
-                                            <span className="text-xs text-gray-500 w-8">sec</span>
-                                        </div>
-                                        
+                                <div className="flex flex-col gap-3">
+                                    <div className="flex items-center gap-2">
                                         <button 
-                                            onClick={() => { setLoopA(null); setLoopB(null); setIsLooping(false); }}
-                                            className="w-full mt-2 px-3 py-2 text-sm bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition font-medium border border-red-100"
+                                            onClick={() => {
+                                                setLoopA(currentTime);
+                                                if (loopB === null || currentTime >= loopB) setLoopB(duration);
+                                                setIsLooping(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 w-28 whitespace-nowrap"
                                         >
-                                            Clear Loop Region
+                                            Set Point A
                                         </button>
+                                        <input 
+                                            type="number"
+                                            min={0}
+                                            step={0.001}
+                                            value={loopA !== null ? loopA.toFixed(3) : ''}
+                                            placeholder="e.g. 1.250"
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value);
+                                                if (!isNaN(val)) {
+                                                    setLoopA(val);
+                                                    setIsLooping(true);
+                                                }
+                                            }}
+                                            className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+                                        />
+                                        <span className="text-xs text-gray-500 w-8">sec</span>
                                     </div>
-                                    <p className="text-xs text-gray-500 mt-3 text-center">
-                                        You can also drag directly on the waveform to create and adjust the loop region!
-                                    </p>
+                                    
+                                    <div className="flex items-center gap-2">
+                                        <button 
+                                            onClick={() => {
+                                                setLoopB(currentTime);
+                                                if (loopA === null || currentTime <= loopA) setLoopA(0);
+                                                setIsLooping(true);
+                                            }}
+                                            className="px-3 py-1.5 bg-white border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50 w-28 whitespace-nowrap"
+                                        >
+                                            Set Point B
+                                        </button>
+                                        <input 
+                                            type="number"
+                                            min={0}
+                                            step={0.001}
+                                            value={loopB !== null ? loopB.toFixed(3) : ''}
+                                            placeholder="e.g. 10.500"
+                                            onChange={(e) => {
+                                                const val = parseFloat(e.target.value);
+                                                if (!isNaN(val)) {
+                                                    setLoopB(val);
+                                                    setIsLooping(true);
+                                                }
+                                            }}
+                                            className="flex-1 bg-white border border-gray-300 rounded-md px-3 py-1.5 text-sm"
+                                        />
+                                        <span className="text-xs text-gray-500 w-8">sec</span>
+                                    </div>
+                                    
+                                    <button 
+                                        onClick={() => { setLoopA(null); setLoopB(null); setIsLooping(false); }}
+                                        className="w-full mt-2 px-3 py-2 text-sm bg-red-50 text-red-600 hover:bg-red-100 rounded-md transition font-medium border border-red-100"
+                                    >
+                                        Clear Loop Region
+                                    </button>
                                 </div>
+                                <p className="text-xs text-gray-500 mt-3 text-center">
+                                    You can also drag directly on the waveform to create and adjust the loop region!
+                                </p>
                             </div>
-                        </>
-                    ) : (
+                        </div>
+                    </div>
+
+                    {!currentTrack && (
                         <div className="h-64 flex flex-col items-center justify-center text-gray-400">
                             <Repeat size={48} className="mb-4 opacity-50" />
                             <p>Select a track to start jamming</p>
