@@ -533,6 +533,76 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                     { duration: "qd", positions }, { duration: "8", positions },
                     { duration: "q", positions }, { duration: "q", positions }
                 ]);
+            } else if (activeStyle === 'metal_gallop') {
+                measures.push([
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "16", velocity: 0.6 },
+                    { midiNotes, duration: "16", velocity: 0.6 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "16", velocity: 0.6 },
+                    { midiNotes, duration: "16", velocity: 0.6 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "16", velocity: 0.6 },
+                    { midiNotes, duration: "16", velocity: 0.6 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "16", velocity: 0.6 },
+                    { midiNotes, duration: "16", velocity: 0.6 }
+                ]);
+                tabMeasures.push([
+                    { duration: "8", positions }, { duration: "16", positions }, { duration: "16", positions },
+                    { duration: "8", positions }, { duration: "16", positions }, { duration: "16", positions },
+                    { duration: "8", positions }, { duration: "16", positions }, { duration: "16", positions },
+                    { duration: "8", positions }, { duration: "16", positions }, { duration: "16", positions }
+                ]);
+            } else if (activeStyle === 'rnb_groove') {
+                measures.push([
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes: [], duration: "16", velocity: 0 },
+                    { midiNotes, duration: "16", velocity: 0.8 },
+                    { midiNotes, duration: "8", velocity: 0.9 },
+                    { midiNotes: [], duration: "8", velocity: 0 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "16", velocity: 0.7 },
+                    { midiNotes, duration: "16", velocity: 0.8 },
+                    { midiNotes, duration: "8", velocity: 0.9 },
+                    { midiNotes: [], duration: "8", velocity: 0 }
+                ]);
+                tabMeasures.push([
+                    { duration: "8", positions }, { duration: "16r", positions: [] }, { duration: "16", positions },
+                    { duration: "8", positions }, { duration: "8r", positions: [] },
+                    { duration: "8", positions }, { duration: "16", positions }, { duration: "16", positions },
+                    { duration: "8", positions }, { duration: "8r", positions: [] }
+                ]);
+            } else if (activeStyle === 'country_strum') {
+                measures.push([
+                    { midiNotes, duration: "q", velocity: 1.0 },
+                    { midiNotes, duration: "8", velocity: 0.7 },
+                    { midiNotes, duration: "8", velocity: 0.8 },
+                    { midiNotes, duration: "q", velocity: 0.9 },
+                    { midiNotes, duration: "8", velocity: 0.7 },
+                    { midiNotes, duration: "8", velocity: 0.8 }
+                ]);
+                tabMeasures.push([
+                    { duration: "q", positions }, { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "q", positions }, { duration: "8", positions }, { duration: "8", positions }
+                ]);
+            } else if (activeStyle === 'pop_punk') {
+                measures.push([
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "8", velocity: 0.7 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "8", velocity: 0.7 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "8", velocity: 0.7 },
+                    { midiNotes, duration: "8", velocity: 1.0 },
+                    { midiNotes, duration: "8", velocity: 0.7 }
+                ]);
+                tabMeasures.push([
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions },
+                    { duration: "8", positions }, { duration: "8", positions }
+                ]);
             } else {
                 measures.push([{ midiNotes, duration: "q", velocity: 1.0 }, { midiNotes, duration: "q", velocity: 0.8 }, { midiNotes, duration: "q", velocity: 0.9 }, { midiNotes, duration: "q", velocity: 0.8 }]);
                 tabMeasures.push([{ duration: "q", positions }, { duration: "q", positions }, { duration: "q", positions }, { duration: "q", positions }]);
@@ -881,6 +951,10 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                         <option value="shuffle">Blues Shuffle</option>
                         <option value="arpeggio">Arpeggio</option>
                         <option value="funk">Funk 16ths</option>
+                        <option value="metal_gallop">Metal Gallop</option>
+                        <option value="rnb_groove">R&B Groove</option>
+                        <option value="country_strum">Country Strum</option>
+                        <option value="pop_punk">Pop Punk 8ths</option>
                         {progId.startsWith('custom_jam_') && (
                             <option value="custom">Original Tap Rhythm</option>
                         )}
