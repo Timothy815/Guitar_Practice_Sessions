@@ -178,6 +178,22 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
         setCurrentLick(generateProceduralLick());
     };
 
+    const handleTranspose = (amount: number) => {
+        const newPattern = currentLick.pattern.map(p => {
+            if (p.fret !== undefined) {
+                return { ...p, fret: Math.max(0, p.fret + amount) };
+            }
+            return p;
+        });
+        const updatedLick = { ...currentLick, pattern: newPattern };
+        setCurrentLick(updatedLick);
+        if (savedLicks.some(l => l.id === currentLick.id)) {
+            const updated = savedLicks.map(l => l.id === currentLick.id ? updatedLick : l);
+            setSavedLicks(updated);
+            localStorage.setItem('fretfocus_saved_licks', JSON.stringify(updated));
+        }
+    };
+
     const isCurrentSaved = savedLicks.some(l => l.id === currentLick.id) || HARDCODED_LICKS.some(l => l.id === currentLick.id);
 
     return (
@@ -204,6 +220,19 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                                 }}
                                 className="bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-primary font-semibold focus:outline-none focus:border-primary/50 w-48"
                             />
+                            {currentLick.pattern.some(p => p.fret !== undefined) && (
+                                <div className="flex items-center gap-1 ml-4 bg-white/5 rounded px-2 border border-white/10" title="Transpose Pitch">
+                                    <span className="text-xs text-slate-400 mr-1">Pitch:</span>
+                                    <button 
+                                        onClick={() => handleTranspose(-1)}
+                                        className="text-slate-300 hover:text-white px-2 py-1 font-bold rounded hover:bg-white/10 transition-colors"
+                                    >-</button>
+                                    <button 
+                                        onClick={() => handleTranspose(1)}
+                                        className="text-slate-300 hover:text-white px-2 py-1 font-bold rounded hover:bg-white/10 transition-colors"
+                                    >+</button>
+                                </div>
+                            )}
                         </div>
                     </div>
 
