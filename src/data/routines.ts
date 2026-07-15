@@ -26,8 +26,7 @@ export interface AbstractLick {
         idx: number, 
         dur: string, 
         articulation?: 'slide' | 'hammer' | 'pull' | 'bend' | 'vibrato',
-        str?: number,
-        fret?: number
+        positions?: { str: number, fret: number | string }[]
     }[];
 }
 
@@ -197,7 +196,9 @@ export function mapAbstractLickToMeasures(lick: AbstractLick, allNotesDesc: {str
     let measureIdx = 0;
 
     for (const p of lick.pattern) {
-        const beatVal = p.dur.includes("16") ? 0.25 : p.dur.includes("8") ? 0.5 : p.dur.includes("h") ? 2 : p.dur.includes("w") ? 4 : 1;
+        const baseVal = p.dur.includes("16") ? 0.25 : p.dur.includes("8") ? 0.5 : p.dur.includes("h") ? 2 : p.dur.includes("w") ? 4 : 1;
+        const beatVal = p.dur.includes("d") ? baseVal * 1.5 : baseVal;
+        
         if (currentBeat + beatVal > 4.01) {
             measureIdx++;
             measures.push([]);
@@ -208,8 +209,8 @@ export function mapAbstractLickToMeasures(lick: AbstractLick, allNotesDesc: {str
         
         if (p.idx === -1 || p.dur.endsWith('r')) {
             measures[measureIdx].push({ duration: p.dur, positions: [] });
-        } else if (p.str !== undefined && p.fret !== undefined) {
-            measures[measureIdx].push({ duration: p.dur, positions: [{str: p.str, fret: p.fret}], articulation: p.articulation });
+        } else if (p.positions && p.positions.length > 0) {
+            measures[measureIdx].push({ duration: p.dur, positions: p.positions, articulation: p.articulation });
         } else {
             const note = allNotesDesc[Math.min(p.idx, allNotesDesc.length - 1)];
             measures[measureIdx].push({ duration: p.dur, positions: [{str: note.str, fret: note.fret}], articulation: p.articulation });

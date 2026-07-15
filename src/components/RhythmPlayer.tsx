@@ -71,14 +71,16 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
     const scheduleNote = (measureIdx: number, noteIdx: number, time: number): number => {
         const noteData = measures[measureIdx][noteIdx];
         const durationStr = noteData.duration || 'q';
-        let beatValue = 1;
-        if (durationStr === '8') beatValue = 0.5;
-        if (durationStr === '16') beatValue = 0.25;
-        if (durationStr === 'h') beatValue = 2;
-        if (durationStr === 'w') beatValue = 4;
+        let durationSec = 60.0 / bpm;
         
-        const secondsPerBeat = 60.0 / bpm;
-        const durationSec = beatValue * secondsPerBeat;
+        if (durationStr.includes("w")) durationSec *= 4.0;
+        else if (durationStr.includes("h")) durationSec *= 2.0;
+        else if (durationStr.includes("q")) durationSec *= 1.0;
+        else if (durationStr.includes("8")) durationSec *= 0.5;
+        else if (durationStr.includes("16")) durationSec *= 0.25;
+
+        if (durationStr.includes("d")) durationSec *= 1.5;
+
         const isRest = durationStr.includes('r');
 
         // Guitar Sample Synth

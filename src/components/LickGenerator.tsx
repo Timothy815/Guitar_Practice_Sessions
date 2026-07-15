@@ -13,6 +13,7 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
     const [currentLick, setCurrentLick] = useState<AbstractLick>(HARDCODED_LICKS[0]);
     const [measures, setMeasures] = useState<TabNoteData[][]>([]);
     const [savedLicks, setSavedLicks] = useState<AbstractLick[]>([]);
+    const [textImport, setTextImport] = useState<string>('');
     
     const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -63,11 +64,83 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
         downloadAnchorNode.remove();
     };
 
+    const handleParseText = (text: string, title?: string) => {
+        if (!text.trim()) return;
+
+        const tokens = text.replace(/\|/g, ',').split(',').map(s => s.trim()).filter(s => s.length > 0);
+        const pattern: any[] = [];
+
+        tokens.forEach(token => {
+            if (token === 'x' || token === '') {
+                pattern.push({ idx: -1, dur: 'qr' });
+                return;
+            }
+
+            const parts = token.split(':');
+            const notesPart = parts[0];
+            let durPart = parts[1] || 'q';
+            
+            let dur = 'q';
+            let isDotted = durPart.includes('.');
+            durPart = durPart.replace('.', '');
+            
+            if (durPart === 'w') dur = 'w';
+            else if (durPart === 'h') dur = 'h';
+            else if (durPart === 'q') dur = 'q';
+            else if (durPart === 'e') dur = '8';
+            else if (durPart === 's') dur = '16';
+            
+            if (isDotted) dur += 'd';
+
+            if (notesPart === 'x' || notesPart.toLowerCase() === 'r') {
+                pattern.push({ idx: -1, dur: dur + 'r' });
+                return;
+            }
+
+            const chordNotes = notesPart.split('+');
+            const positions: {str: number, fret: number | string}[] = [];
+
+            chordNotes.forEach(cn => {
+                const match = cn.match(/^([0-9]+|m)\/([1-6])(x?)$/i);
+                if (match) {
+                    const fretVal = match[1].toLowerCase() === 'm' ? 'X' : parseInt(match[1], 10);
+                    const strVal = parseInt(match[2], 10);
+                    positions.push({ str: strVal, fret: fretVal });
+                }
+            });
+
+            if (positions.length > 0) {
+                pattern.push({ idx: 0, positions, dur });
+            } else {
+                pattern.push({ idx: -1, dur: dur + 'r' });
+            }
+        });
+
+        const newLick: AbstractLick = {
+            id: "text_" + Date.now(),
+            name: title || "Imported Text Lick",
+            pattern
+        };
+        
+        const updated = [...savedLicks, newLick];
+        setSavedLicks(updated);
+        localStorage.setItem('fretfocus_saved_licks', JSON.stringify(updated));
+        setCurrentLick(newLick);
+        setTextImport('');
+    };
+
     const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (!file) return;
 
-        if (file.name.toLowerCase().endsWith('.mid') || file.name.toLowerCase().endsWith('.midi')) {
+        if (file.name.toLowerCase().endsWith('.txt') || file.name.toLowerCase().endsWith('.md')) {
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const text = event.target?.result as string;
+                handleParseText(text, file.name.replace(/\.[^/.]+$/, ""));
+            };
+            reader.readAsText(file);
+        } else if (file.name.toLowerCase().endsWith('.mid') || file.name.toLowerCase().endsWith('.midi')) {
             try {
                 const arrayBuffer = await file.arrayBuffer();
                 const midi = new Midi(arrayBuffer);
@@ -180,8 +253,12 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
 
     const handleTranspose = (amount: number) => {
         const newPattern = currentLick.pattern.map(p => {
-            if (p.fret !== undefined) {
-                return { ...p, fret: Math.max(0, p.fret + amount) };
+            if (p.positions && p.positions.length > 0) {
+                const newPos = p.positions.map(pos => ({
+                    ...pos,
+                    fret: typeof pos.fret === 'number' ? Math.max(0, pos.fret + amount) : pos.fret
+                }));
+                return { ...p, positions: newPos };
             }
             return p;
         });
@@ -220,7 +297,7 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                                 }}
                                 className="bg-white/5 border border-white/10 rounded px-2 py-1 text-sm text-primary font-semibold focus:outline-none focus:border-primary/50 w-48"
                             />
-                            {currentLick.pattern.some(p => p.fret !== undefined) && (
+                            {currentLick.pattern.some(p => p.positions && p.positions.length > 0) && (
                                 <div className="flex items-center gap-1 ml-4 bg-white/5 rounded px-2 border border-white/10" title="Transpose Pitch">
                                     <span className="text-xs text-slate-400 mr-1">Pitch:</span>
                                     <button 
@@ -303,10 +380,26 @@ export default function LickGenerator({ allNotesDesc }: LickGeneratorProps) {
                             type="file" 
                             ref={fileInputRef} 
                             style={{ display: 'none' }} 
-                            accept=".json,.mid,.midi"
+                            accept=".json,.mid,.midi,.txt,.md"
                             onChange={handleImport}
                         />
                     </div>
+                </div>
+
+                <div className="flex gap-2 mb-6">
+                    <input
+                        type="text"
+                        placeholder="Paste text notation (e.g. 5/3:e, 7/3:q) or import .txt"
+                        value={textImport}
+                        onChange={(e) => setTextImport(e.target.value)}
+                        className="flex-1 bg-white/5 border border-white/10 rounded-lg px-3 py-2 text-sm text-slate-200 focus:outline-none focus:border-primary/50"
+                    />
+                    <button
+                        onClick={() => handleParseText(textImport)}
+                        className="px-4 py-2 bg-blue-500/20 hover:bg-blue-500/30 text-blue-300 font-semibold rounded-lg transition-colors text-sm whitespace-nowrap"
+                    >
+                        Parse Text
+                    </button>
                 </div>
 
                 {savedLicks.length === 0 ? (
