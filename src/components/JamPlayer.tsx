@@ -586,7 +586,7 @@ export default function JamPlayer({ shapeData }: JamPlayerProps) {
                 if (instrumentRef.current) {
                     const strumOffset = index * 0.015; 
                     const volume = noteData.velocity || 1.0;
-                    instrumentRef.current.play(midi.toString(), time + strumOffset, { duration: durationSec * 1.5, gain: volume * 1.5 });
+                    instrumentRef.current.play(midi.toString(), time + strumOffset, { duration: durationSec * 4.0, gain: volume * 1.5 });
                 }
             });
         }

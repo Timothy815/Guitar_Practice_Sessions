@@ -114,7 +114,7 @@ export default function RhythmPlayer({ measures }: RhythmPlayerProps) {
                     }
                 }
                 
-                instrumentRef.current.play(midi, attackTime, { duration: durationSec * 1.5, gain });
+                instrumentRef.current.play(midi, attackTime, { duration: durationSec * 4.0, gain });
                 lastNoteRef.current = { midi, str: pos.str };
             });
         }

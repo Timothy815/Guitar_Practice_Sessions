@@ -385,7 +385,7 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
         const t = audioCtxRef.current.currentTime;
         
         midiNotes.forEach((midi, i) => {
-            if (midi !== undefined) instrumentRef.current?.play(midi.toString(), t + (i * 0.03), { duration: 8, gain: 0.8 });
+            if (midi !== undefined) instrumentRef.current?.play(midi.toString(), t + (i * 0.03), { duration: (8) * 4.0, gain: 0.8 });
         });
     };
 
@@ -504,7 +504,7 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
             
             if (activeRhythm) {
                 if (activeRhythm.length === 0) {
-                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.8 }));
+                    midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (secondsPerBeat) * 4.0, gain: 0.8 }));
                     nextNoteTimeRef.current += secondsPerBeat * 4;
                     currentNoteRef.current = 0;
                     currentMeasureRef.current++;
@@ -532,12 +532,12 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
                         }
 
                         if (customArpStep && customArpStep.length > 0) {
-                            customArpStep.forEach(m => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current, { duration: val, gain: 0.8 }));
+                            customArpStep.forEach(m => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current, { duration: (val) * 4.0, gain: 0.8 }));
                         } else if (!customArpStep) {
                             if (currentNoteRef.current % 2 === 0) {
-                                midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.8 }));
+                                midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (val) * 4.0, gain: 0.8 }));
                             } else {
-                                [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: val, gain: 0.6 }));
+                                [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (val) * 4.0, gain: 0.6 }));
                             }
                         }
                         nextNoteTimeRef.current += val;
@@ -557,47 +557,47 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
                 const activeStyle = item.playbackStyle || style;
                 if (activeStyle === 'folk') {
                     if (currentNoteRef.current === 0) {
-                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat * 2, gain: 0.8 }));
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (secondsPerBeat * 2) * 4.0, gain: 0.8 }));
                         nextNoteTimeRef.current += secondsPerBeat * 2;
                         currentNoteRef.current = 1;
                     } else if (currentNoteRef.current === 1) {
-                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (secondsPerBeat) * 4.0, gain: 0.7 }));
                         nextNoteTimeRef.current += secondsPerBeat;
                         currentNoteRef.current = 2;
                     } else if (currentNoteRef.current === 2) {
-                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
+                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (secondsPerBeat) * 4.0, gain: 0.6 }));
                         nextNoteTimeRef.current += secondsPerBeat;
                         currentNoteRef.current = 0;
                         currentMeasureRef.current++;
                     }
                 } else if (activeStyle === 'rock') {
                     if (currentNoteRef.current === 0) {
-                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
-                        if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: (secondsPerBeat) * 4.0, gain: 0.9 });
+                        if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: (secondsPerBeat) * 4.0, gain: 0.9 });
                         nextNoteTimeRef.current += secondsPerBeat;
                         currentNoteRef.current = 1;
                     } else if (currentNoteRef.current === 1) {
-                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
-                        if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.6 });
+                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: (secondsPerBeat) * 4.0, gain: 0.6 });
+                        if (midiNotes[1] !== undefined) instrumentRef.current?.play(midiNotes[1].toString(), nextNoteTimeRef.current, { duration: (secondsPerBeat) * 4.0, gain: 0.6 });
                         nextNoteTimeRef.current += secondsPerBeat;
                         currentNoteRef.current = 2;
                     } else if (currentNoteRef.current === 2) {
-                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: secondsPerBeat * 2, gain: 0.8 }));
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: (secondsPerBeat * 2) * 4.0, gain: 0.8 }));
                         nextNoteTimeRef.current += secondsPerBeat * 2;
                         currentNoteRef.current = 0;
                         currentMeasureRef.current++;
                     }
                 } else if (activeStyle === 'waltz') {
                     if (currentNoteRef.current === 0) {
-                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.9 });
+                        if (midiNotes[0] !== undefined) instrumentRef.current?.play(midiNotes[0].toString(), nextNoteTimeRef.current, { duration: (secondsPerBeat) * 4.0, gain: 0.9 });
                         nextNoteTimeRef.current += secondsPerBeat;
                         currentNoteRef.current = 1;
                     } else if (currentNoteRef.current === 1) {
-                        midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.7 }));
+                        midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (secondsPerBeat) * 4.0, gain: 0.7 }));
                         nextNoteTimeRef.current += secondsPerBeat;
                         currentNoteRef.current = 2;
                     } else if (currentNoteRef.current === 2) {
-                        midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat, gain: 0.6 }));
+                        midiNotes.slice(1).forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (secondsPerBeat) * 4.0, gain: 0.6 }));
                         nextNoteTimeRef.current += secondsPerBeat;
                         currentNoteRef.current = 0;
                         currentMeasureRef.current++;
@@ -632,9 +632,9 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
                         const currentStep = arpNotes[currentNoteRef.current];
                         if (currentStep !== undefined) {
                             if (Array.isArray(currentStep)) {
-                                currentStep.forEach(m => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 }));
+                                currentStep.forEach(m => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current, { duration: (secondsPerBeat) * 4.0, gain: 0.8 }));
                             } else {
-                                instrumentRef.current?.play(currentStep.toString(), nextNoteTimeRef.current, { duration: secondsPerBeat, gain: 0.8 });
+                                instrumentRef.current?.play(currentStep.toString(), nextNoteTimeRef.current, { duration: (secondsPerBeat) * 4.0, gain: 0.8 });
                             }
                         }
                         nextNoteTimeRef.current += secondsPerBeat / 2;
@@ -646,22 +646,22 @@ export default function ChordSandboxView({ keyName, quality, family }: ChordSand
                 } else if (activeStyle === 'funk') {
                     const sixteenth = secondsPerBeat / 4;
                     if (currentNoteRef.current === 0) {
-                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.9 }));
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: (sixteenth) * 4.0, gain: 0.9 }));
                         nextNoteTimeRef.current += sixteenth * 3;
                         currentNoteRef.current = 1;
                     } else if (currentNoteRef.current === 1) {
-                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth, gain: 0.7 }));
+                        [...midiNotes].reverse().forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: (sixteenth) * 4.0, gain: 0.7 }));
                         nextNoteTimeRef.current += sixteenth * 5;
                         currentNoteRef.current = 2;
                     } else if (currentNoteRef.current === 2) {
-                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: sixteenth * 2, gain: 0.8 }));
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.01), { duration: (sixteenth * 2) * 4.0, gain: 0.8 }));
                         nextNoteTimeRef.current += sixteenth * 8;
                         currentNoteRef.current = 0;
                         currentMeasureRef.current++;
                     }
                 } else {
                     if (currentNoteRef.current === 0) {
-                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: secondsPerBeat * 4, gain: 0.8 }));
+                        midiNotes.forEach((m, i) => instrumentRef.current?.play(m.toString(), nextNoteTimeRef.current + (i * 0.02), { duration: (secondsPerBeat * 4) * 4.0, gain: 0.8 }));
                         nextNoteTimeRef.current += secondsPerBeat * 4;
                         currentNoteRef.current = 0;
                         currentMeasureRef.current++;
