@@ -107,6 +107,7 @@ export function JamTracksView() {
 
         return () => {
             if (wavesurfer.current) {
+                wavesurfer.current.pause();
                 wavesurfer.current.destroy();
                 wavesurfer.current = null;
                 regions.current = null;
